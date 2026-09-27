@@ -54,7 +54,9 @@ environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
-ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+# Loopback names are always allowed so the container health check (curl on
+# 127.0.0.1) and the host reverse proxy work without listing them per deploy.
+ALLOWED_HOSTS = list(dict.fromkeys([*env("ALLOWED_HOSTS"), "127.0.0.1", "localhost"]))
 FRONTEND_URL = env("FRONTEND_URL").rstrip("/")
 
 INSTALLED_APPS = [

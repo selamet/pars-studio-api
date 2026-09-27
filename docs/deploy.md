@@ -6,7 +6,7 @@ PostgreSQL and Redis are provided by the `laboflush-stack` host over TLS.
 | Piece | Where |
 | --- | --- |
 | `api.studiospars.com` | App server `91.98.233.170`, `/opt/apps/pars-studio-api`, Docker Compose (`web` on `127.0.0.1:8108` + `worker`), proxied by `/etc/caddy/Caddyfile` |
-| PostgreSQL | `database.selamet.dev:5432` via PgBouncer (transaction pooling, `sslmode=verify-full`, `DATABASE_POOLED=true`) |
+| PostgreSQL | `database.selamet.dev:5432` via PgBouncer (transaction pooling, `sslmode=verify-full&sslrootcert=/etc/ssl/certs/ca-certificates.crt`, `DATABASE_POOLED=true`) |
 | Redis (optional, unused today) | `redis.selamet.dev` |
 | Media | Cloudflare R2 (`R2_*`); local `media` volume until configured |
 | Frontend | Vercel (`studiospars.com`), `NEXT_PUBLIC_API_URL=https://api.studiospars.com` |
@@ -17,7 +17,8 @@ PostgreSQL and Redis are provided by the `laboflush-stack` host over TLS.
 2. **Database**: `pars_studio` / `pars_studio_app` exist on the laboflush host and
    `btree_gist` is created. Connection string:
    `ssh selamet@database.selamet.dev 'sudo cat /opt/laboflush/secrets/apps/pars_studio.conn'`
-   (make sure it carries `?sslmode=verify-full`).
+   Append `?sslmode=verify-full&sslrootcert=/etc/ssl/certs/ca-certificates.crt` (the bundled
+   libpq does not understand `sslrootcert=system`).
 3. **Checkout + cron** (as the deploy user, no sudo):
 
    ```bash
