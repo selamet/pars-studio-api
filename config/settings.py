@@ -34,6 +34,11 @@ env = environ.Env(
     R2_BUCKET_PRIVATE=(str, ""),
     R2_PUBLIC_DOMAIN=(str, ""),
     PRESIGNED_URL_TTL=(int, 900),
+    STRIPE_SECRET_KEY=(str, ""),
+    STRIPE_WEBHOOK_SECRET=(str, ""),
+    CHECKOUT_SESSION_TTL_MINUTES=(int, 30),
+    DOWNLOAD_GRANT_DAYS=(int, 30),
+    DOWNLOAD_MAX_PER_GRANT=(int, 10),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -72,6 +77,8 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.accounts",
     "apps.catalog",
+    "apps.orders",
+    "apps.downloads",
 ]
 
 MIDDLEWARE = [
@@ -302,6 +309,15 @@ TASKS = {
         "QUEUES": ["default"],
     }
 }
+
+# --- Commerce ---------------------------------------------------------------
+
+STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET")
+CHECKOUT_SESSION_TTL_MINUTES = env("CHECKOUT_SESSION_TTL_MINUTES")
+DOWNLOAD_GRANT_DAYS = env("DOWNLOAD_GRANT_DAYS")
+DOWNLOAD_MAX_PER_GRANT = env("DOWNLOAD_MAX_PER_GRANT")
+CURRENCY = "USD"
 
 # --- I18n, static, media ----------------------------------------------------
 

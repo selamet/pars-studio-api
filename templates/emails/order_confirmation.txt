@@ -1,0 +1,15 @@
+Hi,
+
+Thanks for your order at {{ site_name }}. Payment for {{ order.number }} was received.
+
+{% for item in items %}- {{ item.title }} — {{ order.currency }} {{ item.line_total }}
+{% endfor %}
+Total: {{ order.currency }} {{ order.total }}
+
+Your downloads and order details:
+{{ frontend_url }}/{{ order.locale }}/account/orders/{{ order.number }}
+
+Download links are valid for 30 days and a limited number of downloads. If you
+need them extended, reply to this email.
+
+{{ site_name }}

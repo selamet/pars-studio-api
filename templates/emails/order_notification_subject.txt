@@ -1,0 +1,1 @@
+[Pars Studio] New paid order {{ order.number }} — {{ order.currency }} {{ order.total }}

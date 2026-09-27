@@ -1,0 +1,10 @@
+New paid order {{ order.number }} from {{ order.customer_email }}.
+
+{% for item in items %}- {{ item.title }} ({{ item.get_item_type_display }}) — {{ order.currency }} {{ item.line_total }}
+{% endfor %}
+Total: {{ order.currency }} {{ order.total }}
+{% if problems %}
+ATTENTION — fulfilment problems:
+{% for problem in problems %}- {{ problem }}
+{% endfor %}{% endif %}
+Admin: {{ frontend_url }}
