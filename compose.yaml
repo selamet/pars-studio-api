@@ -1,0 +1,30 @@
+# Production stack on the VPS. Joins the laboflush network so `postgres`
+# resolves to the shared PostgreSQL container and Caddy can reach `web`.
+name: pars-studio-api
+
+services:
+  web:
+    build: .
+    image: pars-studio-api:latest
+    container_name: pars-api
+    restart: unless-stopped
+    env_file: .env
+    expose:
+      - "8000"
+    networks: [lfnet]
+
+  worker:
+    image: pars-studio-api:latest
+    container_name: pars-api-worker
+    restart: unless-stopped
+    env_file: .env
+    command: ["python", "manage.py", "db_worker", "--queue-name", "default"]
+    depends_on:
+      web:
+        condition: service_healthy
+    networks: [lfnet]
+
+networks:
+  lfnet:
+    external: true
+    name: laboflush_lfnet
