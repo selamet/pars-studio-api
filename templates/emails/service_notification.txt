@@ -1,0 +1,9 @@
+{{ service_order.user.email }} — {{ service_order.service_product.name }} ({{ order_number }}) is now: {{ status_label }}.
+{% if event.message %}
+Customer message:
+{{ event.message }}
+{% endif %}
+Files uploaded: {{ service_order.files.count }}
+Due: {{ service_order.due_at|date:"Y-m-d" }}
+
+Open in the admin: {{ frontend_url }}

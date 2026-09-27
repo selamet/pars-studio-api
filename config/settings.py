@@ -40,6 +40,7 @@ env = environ.Env(
     DOWNLOAD_GRANT_DAYS=(int, 30),
     DOWNLOAD_MAX_PER_GRANT=(int, 10),
     DATABASE_POOLED=(bool, False),
+    SERVICE_UPLOAD_MAX_MB=(int, 2048),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -80,6 +81,7 @@ INSTALLED_APPS = [
     "apps.catalog",
     "apps.orders",
     "apps.downloads",
+    "apps.services",
 ]
 
 MIDDLEWARE = [
@@ -325,6 +327,8 @@ CHECKOUT_SESSION_TTL_MINUTES = env("CHECKOUT_SESSION_TTL_MINUTES")
 DOWNLOAD_GRANT_DAYS = env("DOWNLOAD_GRANT_DAYS")
 DOWNLOAD_MAX_PER_GRANT = env("DOWNLOAD_MAX_PER_GRANT")
 CURRENCY = "USD"
+SERVICE_UPLOAD_MAX_MB = env("SERVICE_UPLOAD_MAX_MB")
+SERVICE_UPLOAD_EXTENSIONS = ("wav", "aif", "aiff", "flac", "mp3", "zip")
 
 # --- I18n, static, media ----------------------------------------------------
 
