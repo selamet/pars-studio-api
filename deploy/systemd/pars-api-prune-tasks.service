@@ -1,0 +1,7 @@
+[Unit]
+Description=Prune finished Django task results older than 30 days
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/pars-studio-api
+ExecStart=/usr/bin/docker compose exec -T web python manage.py prune_db_task_results --min-age-days 30

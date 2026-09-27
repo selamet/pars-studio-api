@@ -39,6 +39,7 @@ env = environ.Env(
     CHECKOUT_SESSION_TTL_MINUTES=(int, 30),
     DOWNLOAD_GRANT_DAYS=(int, 30),
     DOWNLOAD_MAX_PER_GRANT=(int, 10),
+    DATABASE_POOLED=(bool, False),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -123,6 +124,12 @@ DATABASES = {
         "CONN_HEALTH_CHECKS": True,
     }
 }
+# Production talks to PgBouncer in transaction-pooling mode: no server-side
+# cursors and no server-side prepared statements (psycopg would otherwise
+# prepare after five executions and hit a different backend next time).
+if env("DATABASE_POOLED"):
+    DISABLE_SERVER_SIDE_CURSORS = True
+    DATABASES["default"].setdefault("OPTIONS", {})["prepare_threshold"] = None
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- Auth -------------------------------------------------------------------

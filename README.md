@@ -18,7 +18,7 @@ API with a session cookie.
 | Files | Cloudflare R2 through django-storages |
 | Background jobs | Django Tasks + django-tasks DB backend |
 | Database | PostgreSQL 16 |
-| Runtime | Docker Compose on a Hetzner VPS behind Caddy |
+| Runtime | Docker Compose (Caddy + gunicorn + worker) on a dedicated Hetzner server; DB/Redis on a separate host |
 
 ## Development
 
