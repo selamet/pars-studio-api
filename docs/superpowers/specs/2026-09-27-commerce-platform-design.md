@@ -36,8 +36,8 @@ Out of scope for now: subscriptions/packages, multi-currency, guest checkout
 | Files | Cloudflare R2 via `django-storages` (S3 API); private bucket; presigned URLs | Free egress, S3 compatible |
 | Background jobs | Django Tasks framework with `django-tasks` database backend and a worker container | No Redis/Celery needed at this scale |
 | Email | Django SMTP backend through Resend SMTP | Reuses the existing Resend account and verified domain |
-| Hosting | Docker Compose on the existing Hetzner VPS (`laboflush-stack`), Caddy as TLS reverse proxy, Postgres from the same stack | Cheapest, most flexible; DB already there |
-| Database | PostgreSQL 16, database `pars_studio` (already provisioned). Django connects to the `postgres` container directly over the Docker network, not through PgBouncer | Avoids transaction-pooling limitations |
+| Hosting | Docker Compose on a dedicated Hetzner server (`api.studiospars.com`, 91.98.233.170) with its own Caddy for TLS. PostgreSQL and Redis stay on the `laboflush-stack` host (`database.selamet.dev`, `redis.selamet.dev`) | Keeps the data host single-purpose; app server can be rebuilt freely |
+| Database | PostgreSQL 16, database `pars_studio` (already provisioned), reached through PgBouncer (transaction pooling) over TLS. Django runs with `DATABASE_POOLED=true`: no server-side cursors, no prepared statements | Works with the shared pooler without a direct network path |
 
 ## 3. System overview
 
@@ -45,7 +45,7 @@ Out of scope for now: subscriptions/packages, multi-currency, guest checkout
  Browser ── studiospars.com (Next.js on Vercel)
     │            │  fetch(credentials: include)
     │            ▼
-    │       api.studiospars.com ── Caddy (TLS) ── gunicorn/Django ── Postgres
+    │       api.studiospars.com ── Caddy (TLS) ── gunicorn/Django ──TLS──► PgBouncer/Postgres (database.selamet.dev)
     │                                              │        │
     │                                              │        └── Django Tasks worker (emails, fulfilment)
     │                                              └── Cloudflare R2 (beat files, uploads, deliverables)
@@ -139,7 +139,7 @@ All API routes live under `/api/v1/`. allauth headless routes live under
 - **Observability**: Sentry SDK (DSN optional), structured request logging, `/healthz` for Caddy/uptime checks.
 - **Testing**: `pytest-django`, factories per app, tests run against Postgres in CI (GitHub Actions service container). Stripe calls are mocked; webhook tests use signed fixture payloads.
 - **Tooling**: `uv` for dependencies, `ruff` for lint + format, pre-commit optional.
-- **Deploy**: multi-stage Dockerfile (uv → slim runtime), `compose.yaml` with `web` (gunicorn) and `worker` (`manage.py db_worker`) attached to the external `laboflush_lfnet` network. Migrations run in the container entrypoint. Static files via WhiteNoise. Caddy in `laboflush-stack` gains a `443` listener and `api.studiospars.com` site block (separate PR in that repo); `ufw allow 443/tcp`.
+- **Deploy**: multi-stage Dockerfile (uv → slim runtime), `compose.yaml` with `caddy` (TLS), `web` (gunicorn) and `worker` (`manage.py db_worker`) on a dedicated server. Migrations run in the container entrypoint. Static files via WhiteNoise. `scripts/setup-server.sh` prepares a fresh Ubuntu host, `scripts/deploy.sh` updates it, systemd timers run housekeeping commands. See `docs/deploy.md`.
 - **Frontend contract**: `openapi-typescript` generates `src/lib/api/schema.d.ts` in `pars-studio-v2` from `/api/schema/`; a thin `apiFetch` wrapper adds `credentials: 'include'` and the CSRF header.
 
 ## 8. Phases

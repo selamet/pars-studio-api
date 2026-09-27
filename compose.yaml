@@ -1,30 +1,51 @@
-# Production stack on the VPS. Joins the laboflush network so `postgres`
-# resolves to the shared PostgreSQL container and Caddy can reach `web`.
+# Production stack for the dedicated API server (api.studiospars.com).
+#   caddy  : TLS termination (Let's Encrypt), reverse proxy to web
+#   web    : gunicorn/Django, runs migrations on start
+#   worker : Django Tasks database worker (emails, fulfilment)
+# PostgreSQL and Redis live on database.selamet.dev / redis.selamet.dev and are
+# reached over TLS through DATABASE_URL (see .env.example).
 name: pars-studio-api
 
 services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    env_file: .env
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+
   web:
     build: .
     image: pars-studio-api:latest
-    container_name: pars-api
     restart: unless-stopped
     env_file: .env
     expose:
       - "8000"
-    networks: [lfnet]
+    volumes:
+      - media:/app/media
 
   worker:
     image: pars-studio-api:latest
-    container_name: pars-api-worker
     restart: unless-stopped
     env_file: .env
     command: ["python", "manage.py", "db_worker", "--queue-name", "default"]
+    volumes:
+      - media:/app/media
     depends_on:
       web:
         condition: service_healthy
-    networks: [lfnet]
 
-networks:
-  lfnet:
-    external: true
-    name: laboflush_lfnet
+volumes:
+  caddy_data:
+  caddy_config:
+  # Only used when R2 is not configured; R2 is the intended production storage.
+  media:
