@@ -1,0 +1,1 @@
+[Pars Studio] Paid booking #{{ reservation.code }} — {{ reservation.session_date|date:"Y-m-d" }} {{ reservation.start_time|time:"H:i" }} {{ reservation.get_service_type_display }}

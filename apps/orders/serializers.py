@@ -1,13 +1,23 @@
 from rest_framework import serializers
 
+from apps.bookings.serializers import BookingLineSerializer, ReservationSerializer
 from apps.downloads.serializers import DownloadGrantSerializer
 
 from .models import Order, OrderItem
 
 
 class CheckoutItemSerializer(serializers.Serializer):
-    type = serializers.ChoiceField(choices=["beat_license", "service"])
-    id = serializers.IntegerField(min_value=1)
+    type = serializers.ChoiceField(choices=["beat_license", "service", "booking"])
+    id = serializers.IntegerField(min_value=1, required=False)
+    booking = BookingLineSerializer(required=False)
+
+    def validate(self, attrs):
+        if attrs["type"] == "booking":
+            if "booking" not in attrs:
+                raise serializers.ValidationError({"booking": "Booking details are required."})
+        elif "id" not in attrs:
+            raise serializers.ValidationError({"id": "This field is required."})
+        return attrs
 
 
 class CheckoutSerializer(serializers.Serializer):
@@ -17,7 +27,7 @@ class CheckoutSerializer(serializers.Serializer):
     def validate_items(self, items):
         seen = set()
         for item in items:
-            key = (item["type"], item["id"])
+            key = (item["type"], item.get("id"), str(item.get("booking", "")))
             if key in seen:
                 raise serializers.ValidationError("Duplicate item in cart.")
             seen.add(key)
@@ -36,6 +46,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         source="service_product.slug", read_only=True, default=None
     )
     downloads = DownloadGrantSerializer(source="download_grants", many=True, read_only=True)
+    reservation = ReservationSerializer(read_only=True)
 
     class Meta:
         model = OrderItem
@@ -51,6 +62,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
             "license_tier",
             "service_slug",
             "downloads",
+            "reservation",
         ]
 
 

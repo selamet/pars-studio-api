@@ -1,0 +1,1 @@
+{% if locale == "tr" %}Pars Studio — Rezervasyon iptal edildi (#{{ reservation.code }}){% else %}Pars Studio — Reservation cancelled (#{{ reservation.code }}){% endif %}
