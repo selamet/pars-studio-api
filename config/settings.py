@@ -27,6 +27,13 @@ env = environ.Env(
     TASKS_BACKEND=(str, "django_tasks_db.DatabaseBackend"),
     SENTRY_DSN=(str, ""),
     LOG_LEVEL=(str, "INFO"),
+    R2_ACCOUNT_ID=(str, ""),
+    R2_ACCESS_KEY_ID=(str, ""),
+    R2_SECRET_ACCESS_KEY=(str, ""),
+    R2_BUCKET_PUBLIC=(str, ""),
+    R2_BUCKET_PRIVATE=(str, ""),
+    R2_PUBLIC_DOMAIN=(str, ""),
+    PRESIGNED_URL_TTL=(int, 900),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -49,6 +56,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    "django.contrib.postgres",
     # Third party
     "rest_framework",
     "drf_spectacular",
@@ -59,9 +67,11 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.google",
     "allauth.headless",
     "django_tasks_db",
+    "django_filters",
     # Project
     "apps.core",
     "apps.accounts",
+    "apps.catalog",
 ]
 
 MIDDLEWARE = [
@@ -221,6 +231,11 @@ REST_FRAMEWORK = {
         "checkout": "10/min",
     },
     "EXCEPTION_HANDLER": "apps.core.exceptions.exception_handler",
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
 }
 
 SPECTACULAR_SETTINGS = {
@@ -300,8 +315,57 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Two media buckets: `public` (covers, previews) is served straight from R2's
+# public domain; `private` (license files, uploads, deliverables) is only ever
+# reached through short-lived presigned URLs. Without R2 credentials both fall
+# back to the local filesystem so development needs no cloud account.
+R2_ACCOUNT_ID = env("R2_ACCOUNT_ID")
+PRESIGNED_URL_TTL = env("PRESIGNED_URL_TTL")
+USE_R2 = bool(R2_ACCOUNT_ID and env("R2_ACCESS_KEY_ID"))
+
+if USE_R2:
+    _r2_common = {
+        "access_key": env("R2_ACCESS_KEY_ID"),
+        "secret_key": env("R2_SECRET_ACCESS_KEY"),
+        "endpoint_url": f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+        "region_name": "auto",
+        "signature_version": "s3v4",
+        "default_acl": None,
+        "file_overwrite": False,
+        "addressing_style": "path",
+    }
+    _public_media = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            **_r2_common,
+            "bucket_name": env("R2_BUCKET_PUBLIC"),
+            "querystring_auth": False,
+            "custom_domain": env("R2_PUBLIC_DOMAIN") or None,
+        },
+    }
+    _private_media = {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            **_r2_common,
+            "bucket_name": env("R2_BUCKET_PRIVATE"),
+            "querystring_auth": True,
+            "querystring_expire": PRESIGNED_URL_TTL,
+        },
+    }
+else:
+    _public_media = {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {"location": MEDIA_ROOT / "public", "base_url": f"{MEDIA_URL}public/"},
+    }
+    _private_media = {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {"location": MEDIA_ROOT / "private", "base_url": f"{MEDIA_URL}private/"},
+    }
+
 STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "default": _public_media,
+    "public": _public_media,
+    "private": _private_media,
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
