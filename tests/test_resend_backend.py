@@ -36,6 +36,7 @@ def test_resend_backend_posts_json_with_html_and_attachments():
         assert backend.send_messages([message]) == 1
 
     assert captured["headers"]["Authorization"] == "Bearer re_test"
+    assert captured["headers"]["User-agent"].startswith("pars-studio-api/")
     body = captured["body"]
     assert body["to"] == ["to@example.com"] and body["reply_to"] == ["r@example.com"]
     assert body["html"] == "<b>html</b>" and body["text"] == "plain"

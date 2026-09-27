@@ -18,6 +18,8 @@ from django.core.mail.backends.base import BaseEmailBackend
 logger = logging.getLogger(__name__)
 
 RESEND_ENDPOINT = "https://api.resend.com/emails"
+# Resend sits behind Cloudflare, which rejects Python's default User-Agent (error 1010).
+USER_AGENT = "pars-studio-api/1.0 (+https://api.studiospars.com)"
 
 
 class ResendEmailBackend(BaseEmailBackend):
@@ -78,7 +80,11 @@ class ResendEmailBackend(BaseEmailBackend):
         request = urllib.request.Request(
             RESEND_ENDPOINT,
             data=json.dumps(self._payload(message)).encode(),
-            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": USER_AGENT,
+            },
             method="POST",
         )
         try:
