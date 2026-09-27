@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from .models import Reservation
 
@@ -21,7 +21,7 @@ def build_ics(reservation: Reservation) -> str:
         "METHOD:PUBLISH",
         "BEGIN:VEVENT",
         f"UID:reservation-{reservation.pk}@studiospars.com",
-        f"DTSTAMP:{_stamp(datetime.utcnow())}Z",
+        f"DTSTAMP:{_stamp(datetime.now(UTC))}Z",
         f"DTSTART;TZID=Europe/Istanbul:{_stamp(start)}",
         f"DTEND;TZID=Europe/Istanbul:{_stamp(end)}",
         f"SUMMARY:Pars Studio — {reservation.get_service_type_display()} (#{reservation.code})",
