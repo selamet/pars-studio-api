@@ -65,6 +65,8 @@ Pulls, rebuilds, restarts (`web` runs `migrate` before gunicorn) and waits for
 
 - Logs: `docker compose logs -f web worker` (in the app dir)
 - Django shell: `docker compose exec web python manage.py shell`
+- Storage check after changing `R2_*`: `docker compose exec web python manage.py check_storage`
+  (writes, reads, signs and deletes a probe file on both buckets)
 - Cron (`crontab -l`): pending orders and reservation holds expire every 10 min,
   task results are pruned nightly; output in `cron.log`.
 - The worker delivers emails and runs fulfilment; if it is down, tasks queue in
