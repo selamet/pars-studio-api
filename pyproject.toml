@@ -1,0 +1,46 @@
+[project]
+name = "pars-studio-api"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=6.0",
+    "django-allauth[socialaccount]>=65.19.4",
+    "django-cors-headers>=4.9.0",
+    "django-environ>=0.14.0",
+    "django-storages[s3]>=1.14.6",
+    "django-tasks-db>=0.13.0",
+    "django-unfold>=0.108.0",
+    "djangorestframework>=3.18.1",
+    "drf-spectacular>=0.30.0",
+    "gunicorn>=26.2.0",
+    "psycopg[binary,pool]>=3.3.6",
+    "sentry-sdk[django]>=2.70.0",
+    "stripe>=15.6.1",
+    "whitenoise>=6.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-django>=4.14.0",
+    "ruff>=0.16.9",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings_test"
+python_files = ["tests.py", "test_*.py"]
+addopts = "-ra -q --reuse-db"
+filterwarnings = ["error::DeprecationWarning:apps.*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "DJ", "S105", "S106"]
+ignore = ["DJ001"]
+
+[tool.ruff.lint.per-file-ignores]
+"config/settings*.py" = ["F403", "F405"]
+"**/tests/**" = ["S105", "S106"]

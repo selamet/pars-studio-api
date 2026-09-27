@@ -1,0 +1,332 @@
+"""
+Django settings for the Pars Studio API.
+
+Every deployment-specific value comes from the environment (see `.env.example`).
+The same module serves development and production; `DEBUG` flips the
+security-related defaults.
+"""
+
+from pathlib import Path
+
+import environ
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+env = environ.Env(
+    DEBUG=(bool, False),
+    ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1"]),
+    CORS_ALLOWED_ORIGINS=(list, ["http://localhost:3000"]),
+    CSRF_TRUSTED_ORIGINS=(list, ["http://localhost:3000"]),
+    COOKIE_DOMAIN=(str, ""),
+    FRONTEND_URL=(str, "http://localhost:3000"),
+    EMAIL_URL=(str, "consolemail://"),
+    DEFAULT_FROM_EMAIL=(str, "Pars Studio <noreply@studiospars.com>"),
+    STUDIO_NOTIFICATION_EMAIL=(str, "parsstudiosofficial@gmail.com"),
+    GOOGLE_CLIENT_ID=(str, ""),
+    GOOGLE_CLIENT_SECRET=(str, ""),
+    TASKS_BACKEND=(str, "django_tasks_db.DatabaseBackend"),
+    SENTRY_DSN=(str, ""),
+    LOG_LEVEL=(str, "INFO"),
+)
+environ.Env.read_env(BASE_DIR / ".env")
+
+# --- Core -------------------------------------------------------------------
+
+SECRET_KEY = env("SECRET_KEY")
+DEBUG = env("DEBUG")
+ALLOWED_HOSTS = env("ALLOWED_HOSTS")
+FRONTEND_URL = env("FRONTEND_URL").rstrip("/")
+
+INSTALLED_APPS = [
+    # Unfold must precede django.contrib.admin.
+    "unfold",
+    "unfold.contrib.filters",
+    "unfold.contrib.forms",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.sites",
+    # Third party
+    "rest_framework",
+    "drf_spectacular",
+    "corsheaders",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "allauth.headless",
+    "django_tasks_db",
+    # Project
+    "apps.core",
+    "apps.accounts",
+]
+
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
+]
+
+ROOT_URLCONF = "config.urls"
+WSGI_APPLICATION = "config.wsgi.application"
+SITE_ID = 1
+
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR / "templates"],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
+
+# --- Database ---------------------------------------------------------------
+
+DATABASES = {
+    "default": {
+        **env.db("DATABASE_URL", default="postgres://pars:pars@localhost:5432/pars_studio"),
+        "CONN_MAX_AGE": 60,
+        "CONN_HEALTH_CHECKS": True,
+    }
+}
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# --- Auth -------------------------------------------------------------------
+
+AUTH_USER_MODEL = "accounts.User"
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+AUTH_PASSWORD_VALIDATORS = [
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+]
+
+# allauth (headless only: the Next.js app renders every screen)
+ACCOUNT_ADAPTER = "apps.accounts.adapter.AccountAdapter"
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = False
+# Clicking the verification link (in the same browser) signs the user in right away.
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Pars Studio] "
+ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = False
+ACCOUNT_RATE_LIMITS = {
+    "login_failed": "10/m/ip,5/5m/key",
+    "signup": "20/m/ip",
+    "reset_password": "20/m/ip,5/m/key",
+    "confirm_email": "1/3m/key",
+}
+
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APPS": [
+            {
+                "client_id": env("GOOGLE_CLIENT_ID"),
+                "secret": env("GOOGLE_CLIENT_SECRET"),
+                "key": "",
+            }
+        ],
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
+        "EMAIL_AUTHENTICATION": True,
+    }
+}
+
+HEADLESS_ONLY = True
+HEADLESS_CLIENTS = ("browser",)
+HEADLESS_SERVE_SPECIFICATION = True
+# Links placed in emails point at the Next.js app, which calls the API back.
+HEADLESS_FRONTEND_URLS = {
+    "account_confirm_email": f"{FRONTEND_URL}/account/verify-email/{{key}}",
+    "account_reset_password": f"{FRONTEND_URL}/account/password/reset",
+    "account_reset_password_from_key": f"{FRONTEND_URL}/account/password/reset/key/{{key}}",
+    "account_signup": f"{FRONTEND_URL}/account/signup",
+    "socialaccount_login_error": f"{FRONTEND_URL}/account/provider/callback",
+}
+
+# --- Sessions, CSRF, CORS ---------------------------------------------------
+
+_cookie_domain = env("COOKIE_DOMAIN") or None
+SESSION_COOKIE_DOMAIN = _cookie_domain
+CSRF_COOKIE_DOMAIN = _cookie_domain
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+# The frontend reads the CSRF cookie to send it back as a header.
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
+
+CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS")
+CORS_ALLOW_CREDENTIALS = True
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    USE_X_FORWARDED_HOST = True
+    SECURE_SSL_REDIRECT = False  # Caddy terminates TLS and redirects HTTP itself.
+    SECURE_HSTS_SECONDS = 60 * 60 * 24 * 30
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_REFERRER_POLICY = "same-origin"
+    X_FRAME_OPTIONS = "DENY"
+
+# --- REST framework ---------------------------------------------------------
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 24,
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"]
+    + (["rest_framework.renderers.BrowsableAPIRenderer"] if DEBUG else []),
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "120/min",
+        "user": "600/min",
+        "checkout": "10/min",
+    },
+    "EXCEPTION_HANDLER": "apps.core.exceptions.exception_handler",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Pars Studio API",
+    "DESCRIPTION": "Beats, mastering services and studio bookings for Pars Studio.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SCHEMA_PATH_PREFIX": r"/api/v1",
+    "COMPONENT_SPLIT_REQUEST": True,
+}
+
+# --- Admin (Unfold) ---------------------------------------------------------
+
+UNFOLD = {
+    "SITE_TITLE": "Pars Studio",
+    "SITE_HEADER": "Pars Studio",
+    "SITE_SYMBOL": "graphic_eq",
+    "SITE_URL": FRONTEND_URL,
+    "SHOW_HISTORY": True,
+    "COLORS": {
+        # Brass-gold accent that matches the storefront.
+        "primary": {
+            "50": "252 247 234",
+            "100": "247 236 204",
+            "200": "239 218 156",
+            "300": "229 196 105",
+            "400": "218 172 62",
+            "500": "196 146 40",
+            "600": "163 116 30",
+            "700": "128 89 26",
+            "800": "102 71 25",
+            "900": "84 59 23",
+            "950": "48 32 10",
+        },
+    },
+}
+
+# --- Email, tasks -----------------------------------------------------------
+
+# django-environ parses EMAIL_URL into legacy EMAIL_* keys; Django 6.1+ wants MAILERS.
+_email = env.email("EMAIL_URL")
+_email_options = {
+    "host": _email.get("EMAIL_HOST"),
+    "port": _email.get("EMAIL_PORT"),
+    "username": _email.get("EMAIL_HOST_USER"),
+    "password": _email.get("EMAIL_HOST_PASSWORD"),
+    "use_ssl": _email.get("EMAIL_USE_SSL"),
+    "use_tls": _email.get("EMAIL_USE_TLS"),
+    "file_path": _email.get("EMAIL_FILE_PATH"),
+}
+MAILERS = {
+    "default": {
+        "BACKEND": _email["EMAIL_BACKEND"],
+        "OPTIONS": {key: value for key, value in _email_options.items() if value},
+    }
+}
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+STUDIO_NOTIFICATION_EMAIL = env("STUDIO_NOTIFICATION_EMAIL")
+
+TASKS = {
+    "default": {
+        "BACKEND": env("TASKS_BACKEND"),
+        "QUEUES": ["default"],
+    }
+}
+
+# --- I18n, static, media ----------------------------------------------------
+
+LANGUAGE_CODE = "en"
+TIME_ZONE = "Europe/Istanbul"
+USE_I18N = True
+USE_TZ = True
+
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+# --- Logging, monitoring ----------------------------------------------------
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "plain": {"format": "%(asctime)s %(levelname)s %(name)s %(message)s"},
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "plain"},
+    },
+    "root": {"handlers": ["console"], "level": env("LOG_LEVEL")},
+    "loggers": {
+        "django.request": {"level": "WARNING"},
+        "django.db.backends": {"level": "WARNING"},
+    },
+}
+
+SENTRY_DSN = env("SENTRY_DSN")
+if SENTRY_DSN:
+    import sentry_sdk
+
+    sentry_sdk.init(dsn=SENTRY_DSN, send_default_pii=False, traces_sample_rate=0.1)

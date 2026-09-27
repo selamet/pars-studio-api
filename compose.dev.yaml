@@ -1,0 +1,22 @@
+# Local development dependencies only. The API itself runs with `uv run manage.py runserver`.
+name: pars-studio-api-dev
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pars
+      POSTGRES_PASSWORD: pars
+      POSTGRES_DB: pars_studio
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pars -d pars_studio"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
