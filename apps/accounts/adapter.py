@@ -1,6 +1,6 @@
 from allauth.account.adapter import DefaultAccountAdapter
 
-from .tasks import send_email
+from apps.core.tasks import send_email
 
 
 class AccountAdapter(DefaultAccountAdapter):

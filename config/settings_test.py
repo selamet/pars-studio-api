@@ -12,3 +12,6 @@ STORAGES["staticfiles"] = {  # noqa: F405
 }
 REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []  # noqa: F405
 ACCOUNT_RATE_LIMITS = {}
+
+STRIPE_SECRET_KEY = "sk_test_dummy"  # noqa: S105
+STRIPE_WEBHOOK_SECRET = "whsec_test_dummy"  # noqa: S105
