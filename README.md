@@ -28,8 +28,15 @@ cp .env.example .env            # fill in values
 docker compose -f compose.dev.yaml up -d db
 uv run manage.py migrate
 uv run manage.py createsuperuser
+uv run manage.py seed_catalog   # sample beats, services, studio rates
 uv run manage.py runserver      # http://localhost:8000
+uv run manage.py db_worker      # in a second terminal: sends queued emails
 ```
+
+Emails and other background work go through the database task queue, so
+nothing is delivered until `db_worker` runs. For a single-process setup set
+`TASKS_BACKEND=django.tasks.backends.immediate.ImmediateBackend` in `.env`.
+Media files land in `./media` unless the `R2_*` variables are set.
 
 - Admin: http://localhost:8000/admin/
 - OpenAPI schema: http://localhost:8000/api/schema/ (Swagger UI at `/api/docs/`)
