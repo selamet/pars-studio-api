@@ -1,40 +1,24 @@
-# Production stack for the dedicated API server (api.studiospars.com).
-#   caddy  : TLS termination (Let's Encrypt), reverse proxy to web
-#   web    : gunicorn/Django, runs migrations on start
-#   worker : Django Tasks database worker (emails, fulfilment)
-# PostgreSQL and Redis live on database.selamet.dev / redis.selamet.dev and are
-# reached over TLS through DATABASE_URL (see .env.example).
+# Production stack on the shared app server (api.studiospars.com).
+# The host's system Caddy terminates TLS and reverse-proxies to WEB_PORT on
+# loopback (see deploy/Caddyfile.snippet). PostgreSQL and Redis live on
+# database.selamet.dev / redis.selamet.dev and are reached over TLS.
 name: pars-studio-api
 
 services:
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    env_file: .env
-    volumes:
-      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      web:
-        condition: service_healthy
-
   web:
     build: .
     image: pars-studio-api:latest
+    container_name: pars-studio-api
     restart: unless-stopped
     env_file: .env
-    expose:
-      - "8000"
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8108}:8000"
     volumes:
       - media:/app/media
 
   worker:
     image: pars-studio-api:latest
+    container_name: pars-studio-api-worker
     restart: unless-stopped
     env_file: .env
     command: ["python", "manage.py", "db_worker", "--queue-name", "default"]
@@ -45,7 +29,5 @@ services:
         condition: service_healthy
 
 volumes:
-  caddy_data:
-  caddy_config:
-  # Only used when R2 is not configured; R2 is the intended production storage.
+  # Only used when R2 is not configured.
   media:

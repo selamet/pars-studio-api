@@ -71,7 +71,6 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    "allauth.socialaccount.providers.google",
     "allauth.headless",
     "django_tasks_db",
     "django_filters",
@@ -169,6 +168,13 @@ ACCOUNT_RATE_LIMITS = {
     "reset_password": "20/m/ip,5/m/key",
     "confirm_email": "1/3m/key",
 }
+
+# Google sign-in only exists when credentials are configured; the frontend hides
+# the button when the provider is absent from the headless config.
+if env("GOOGLE_CLIENT_ID"):
+    INSTALLED_APPS.insert(
+        INSTALLED_APPS.index("allauth.headless"), "allauth.socialaccount.providers.google"
+    )
 
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
