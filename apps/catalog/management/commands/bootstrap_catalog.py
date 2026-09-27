@@ -1,8 +1,9 @@
 """Production starting catalog: the studio's services and hourly rates.
 
-Create-only and idempotent: rows that already exist (matched by slug or service
-type) are left untouched so prices edited in the admin survive re-runs. Beats
-are not created here because they need audio files; add them in the admin.
+Idempotent: rows that already exist (matched by slug or service type) keep
+their prices and English copy so admin edits survive re-runs; only empty
+Turkish fields are backfilled. Beats are not created here because they need
+audio files; add them in the admin.
 """
 
 from decimal import Decimal
@@ -14,6 +15,7 @@ from apps.catalog.models import ServiceProduct, StudioRate
 SERVICES = [
     {
         "slug": "single-mastering",
+        "name_tr": "Single Mastering",
         "name": "Single Mastering",
         "kind": ServiceProduct.Kind.MASTERING,
         "price_usd": "60.00",
@@ -26,9 +28,16 @@ SERVICES = [
             "at least 3 dB of headroom and we deliver a 24-bit WAV master plus a streaming "
             "MP3, checked against loudness targets for Spotify, Apple Music and YouTube."
         ),
+        "description_tr": (
+            "Tek parça için şeffaf, platformlara hazır mastering. En az 3 dB headroom "
+            "bırakılmış stereo miksini gönder; Spotify, Apple Music ve YouTube loudness "
+            "hedeflerine göre kontrol edilmiş 24-bit WAV master ve yayın için MP3 teslim "
+            "edelim."
+        ),
     },
     {
         "slug": "stem-mastering",
+        "name_tr": "Stem Mastering",
         "name": "Stem Mastering",
         "kind": ServiceProduct.Kind.MASTERING,
         "price_usd": "120.00",
@@ -41,9 +50,15 @@ SERVICES = [
             "control over balance than a stereo master allows. Same deliverables as Single "
             "Mastering, plus an instrumental master on request."
         ),
+        "description_tr": (
+            "Stereo masterın izin verdiğinden daha fazla denge kontrolü için en fazla 8 "
+            "gruplanmış stem (davul, bas, müzik, vokal...) üzerinden mastering. Teslimatlar "
+            "Single Mastering ile aynı; istek üzerine enstrümantal master da eklenir."
+        ),
     },
     {
         "slug": "mixing",
+        "name_tr": "Miks",
         "name": "Mixing",
         "kind": ServiceProduct.Kind.MIXING,
         "price_usd": "250.00",
@@ -56,9 +71,15 @@ SERVICES = [
             "EQ, compression, effects and automation. Delivered as a mix-ready 24-bit WAV "
             "with two rounds of revisions included."
         ),
+        "description_tr": (
+            "En fazla 40 stem'den tek şarkının tam miksi: edit, tuning rötuşları, denge, EQ, "
+            "kompresyon, efekt ve otomasyon. Master'a hazır 24-bit WAV olarak teslim edilir, "
+            "iki tur revizyon dahildir."
+        ),
     },
     {
         "slug": "mix-and-master",
+        "name_tr": "Miks & Master",
         "name": "Mix & Master",
         "kind": ServiceProduct.Kind.MIXING,
         "price_usd": "290.00",
@@ -70,6 +91,11 @@ SERVICES = [
             "Mixing and mastering of one song as a single job, up to 60 stems. You get the "
             "mix for approval first, then the final master, instrumental and MP3 in one "
             "delivery. Two rounds of revisions included."
+        ),
+        "description_tr": (
+            "Tek şarkının miks ve mastering'i tek işte, en fazla 60 stem. Önce onayın için "
+            "miksi alırsın, ardından final master, enstrümantal ve MP3 tek teslimatta gelir. "
+            "İki tur revizyon dahildir."
         ),
     },
 ]
@@ -90,9 +116,11 @@ class Command(BaseCommand):
         created = skipped = 0
         for spec in SERVICES:
             spec = {**spec, "price_usd": Decimal(spec["price_usd"])}
-            _, was_created = ServiceProduct.objects.get_or_create(
+            product, was_created = ServiceProduct.objects.get_or_create(
                 slug=spec["slug"], defaults={k: v for k, v in spec.items() if k != "slug"}
             )
+            if not was_created:
+                self._backfill_turkish(product, spec)
             created, skipped = self._tally(created, skipped, was_created, spec["name"])
         for service_type, price in RATES:
             _, was_created = StudioRate.objects.get_or_create(
@@ -104,6 +132,15 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(f"Done. {created} created, {skipped} already existed.")
         )
+
+    @staticmethod
+    def _backfill_turkish(product: ServiceProduct, spec: dict) -> None:
+        """Fill empty Turkish copy on existing rows without touching edited text."""
+        changed = [f for f in ("name_tr", "description_tr") if not getattr(product, f)]
+        if changed:
+            for field in changed:
+                setattr(product, field, spec[field])
+            product.save(update_fields=changed)
 
     def _tally(self, created: int, skipped: int, was_created: bool, label: str):
         if was_created:

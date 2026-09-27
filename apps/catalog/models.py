@@ -31,6 +31,9 @@ class Beat(TimeStampedModel):
     genre = models.CharField(max_length=60, blank=True)
     tags = ArrayField(models.CharField(max_length=40), default=list, blank=True)
     description = models.TextField(blank=True)
+    description_tr = models.TextField(
+        blank=True, help_text="Turkish description; falls back to English."
+    )
     cover = models.ImageField(upload_to="beats/covers/", storage=public_storage, blank=True)
     preview = models.FileField(
         upload_to="beats/previews/",
@@ -125,6 +128,9 @@ class ServiceProduct(TimeStampedModel):
         MIXING = "mixing", "Mixing"
 
     name = models.CharField(max_length=120)
+    name_tr = models.CharField(
+        max_length=120, blank=True, help_text="Turkish name; falls back to name."
+    )
     slug = models.SlugField(max_length=140, unique=True)
     kind = models.CharField(max_length=20, choices=Kind.choices)
     price_usd = models.DecimalField(
@@ -136,6 +142,9 @@ class ServiceProduct(TimeStampedModel):
         default=1, help_text="How many source files the customer may upload."
     )
     description = models.TextField(blank=True)
+    description_tr = models.TextField(
+        blank=True, help_text="Turkish description; falls back to English."
+    )
     is_active = models.BooleanField(default=True)
     sort_order = models.PositiveSmallIntegerField(default=0)
 

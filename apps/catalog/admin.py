@@ -24,7 +24,8 @@ class BeatAdmin(ModelAdmin):
     actions = ["publish", "unpublish"]
     fieldsets = (
         (None, {"fields": ("title", "slug", "status", "published_at")}),
-        ("Music", {"fields": ("bpm", "key", "genre", "tags", "duration_seconds", "description")}),
+        ("Music", {"fields": ("bpm", "key", "genre", "tags", "duration_seconds")}),
+        ("Copy", {"fields": ("description", "description_tr")}),
         ("Media", {"fields": ("cover", "preview")}),
         ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
@@ -71,9 +72,17 @@ class ServiceProductAdmin(ModelAdmin):
     ]
     list_filter = ["kind", "is_active"]
     list_editable = ["is_active"]
-    search_fields = ["name", "slug"]
+    search_fields = ["name", "name_tr", "slug"]
     prepopulated_fields = {"slug": ["name"]}
     ordering = ["sort_order"]
+    fieldsets = (
+        (None, {"fields": ("name", "name_tr", "slug", "kind", "is_active", "sort_order")}),
+        (
+            "Pricing & scope",
+            {"fields": ("price_usd", "turnaround_days", "included_revisions", "max_stems")},
+        ),
+        ("Copy", {"fields": ("description", "description_tr")}),
+    )
 
 
 @admin.register(StudioRate)
