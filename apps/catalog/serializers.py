@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .models import Beat, BeatLicense, ServiceProduct, StudioRate
@@ -15,6 +16,7 @@ class BeatLicenseSerializer(serializers.ModelSerializer):
         model = BeatLicense
         fields = ["id", "tier", "tier_label", "price_usd", "includes", "terms"]
 
+    @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_includes(self, obj: BeatLicense) -> list[str]:
         # Never leak the private file names; only say what the buyer receives.
         return list(obj.file_kinds)
@@ -54,14 +56,11 @@ class BeatListSerializer(serializers.ModelSerializer):
 
 
 class BeatDetailSerializer(BeatListSerializer):
-    licenses = serializers.SerializerMethodField()
+    # The view prefetches only active licenses, so the relation is already filtered.
+    licenses = BeatLicenseSerializer(many=True, read_only=True)
 
     class Meta(BeatListSerializer.Meta):
         fields = BeatListSerializer.Meta.fields + ["description", "licenses"]
-
-    def get_licenses(self, obj: Beat) -> list[dict]:
-        active = [lic for lic in obj.licenses.all() if lic.is_active]
-        return BeatLicenseSerializer(active, many=True).data
 
 
 class ServiceProductSerializer(serializers.ModelSerializer):
