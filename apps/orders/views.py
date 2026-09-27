@@ -1,3 +1,6 @@
+import logging
+
+import stripe
 from django.db import transaction
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
@@ -11,6 +14,8 @@ from . import webhooks
 from .models import Order
 from .serializers import CheckoutResponseSerializer, CheckoutSerializer, OrderSerializer
 from .services import CheckoutError, build_order, create_checkout_session
+
+logger = logging.getLogger(__name__)
 
 
 class CheckoutThrottle(throttling.UserRateThrottle):
@@ -54,6 +59,16 @@ class CheckoutView(APIView):
             return Response(
                 {"detail": str(exc), "code": exc.code, "line": exc.line},
                 status=status.HTTP_409_CONFLICT,
+            )
+        except stripe.StripeError as exc:
+            # The atomic block rolled the pending order back; nothing to clean up.
+            logger.exception("Stripe refused to open a checkout session: %s", exc)
+            return Response(
+                {
+                    "detail": "Payment provider is unavailable right now.",
+                    "code": "payment_unavailable",
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
             )
         return Response({"order_number": order.number, "checkout_url": checkout_url})
 

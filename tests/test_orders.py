@@ -385,3 +385,21 @@ def test_order_admin_pages_render(admin_client, pending_order):
         "/admin/downloads/downloadgrant/",
     ]:
         assert admin_client.get(url).status_code == 200, url
+
+
+@pytest.mark.django_db
+def test_checkout_reports_stripe_outage_and_keeps_no_order(api_client, verified_user, catalog):
+    import stripe
+
+    api_client.force_authenticate(verified_user)
+    with mock.patch(
+        "stripe.checkout.Session.create", side_effect=stripe.APIConnectionError("down")
+    ):
+        response = api_client.post(
+            "/api/v1/checkout",
+            {"items": [{"type": "service", "id": catalog.service.pk}]},
+            format="json",
+        )
+    assert response.status_code == 502
+    assert response.json()["code"] == "payment_unavailable"
+    assert Order.objects.count() == 0
