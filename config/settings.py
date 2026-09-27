@@ -20,6 +20,12 @@ env = environ.Env(
     COOKIE_DOMAIN=(str, ""),
     FRONTEND_URL=(str, "http://localhost:3000"),
     EMAIL_URL=(str, "consolemail://"),
+    EMAIL_HOST=(str, ""),
+    EMAIL_PORT=(int, 465),
+    EMAIL_HOST_USER=(str, ""),
+    EMAIL_HOST_PASSWORD=(str, ""),
+    EMAIL_USE_SSL=(bool, True),
+    EMAIL_USE_TLS=(bool, False),
     DEFAULT_FROM_EMAIL=(str, "Pars Studio <noreply@studiospars.com>"),
     STUDIO_NOTIFICATION_EMAIL=(str, "parsstudiosofficial@gmail.com"),
     GOOGLE_CLIENT_ID=(str, ""),
@@ -298,20 +304,33 @@ UNFOLD = {
 
 # --- Email, tasks -----------------------------------------------------------
 
-# django-environ parses EMAIL_URL into legacy EMAIL_* keys; Django 6.1+ wants MAILERS.
-_email = env.email("EMAIL_URL")
-_email_options = {
-    "host": _email.get("EMAIL_HOST"),
-    "port": _email.get("EMAIL_PORT"),
-    "username": _email.get("EMAIL_HOST_USER"),
-    "password": _email.get("EMAIL_HOST_PASSWORD"),
-    "use_ssl": _email.get("EMAIL_USE_SSL"),
-    "use_tls": _email.get("EMAIL_USE_TLS"),
-    "file_path": _email.get("EMAIL_FILE_PATH"),
-}
+# Email: either discrete SMTP variables (EMAIL_HOST wins, safe for any password
+# characters) or an EMAIL_URL parsed by django-environ. Django 6.1+ wants MAILERS.
+if env("EMAIL_HOST"):
+    _email_backend = "django.core.mail.backends.smtp.EmailBackend"
+    _email_options = {
+        "host": env("EMAIL_HOST"),
+        "port": env("EMAIL_PORT"),
+        "username": env("EMAIL_HOST_USER"),
+        "password": env("EMAIL_HOST_PASSWORD"),
+        "use_ssl": env("EMAIL_USE_SSL"),
+        "use_tls": env("EMAIL_USE_TLS"),
+    }
+else:
+    _email = env.email("EMAIL_URL")
+    _email_backend = _email["EMAIL_BACKEND"]
+    _email_options = {
+        "host": _email.get("EMAIL_HOST"),
+        "port": _email.get("EMAIL_PORT"),
+        "username": _email.get("EMAIL_HOST_USER"),
+        "password": _email.get("EMAIL_HOST_PASSWORD"),
+        "use_ssl": _email.get("EMAIL_USE_SSL"),
+        "use_tls": _email.get("EMAIL_USE_TLS"),
+        "file_path": _email.get("EMAIL_FILE_PATH"),
+    }
 MAILERS = {
     "default": {
-        "BACKEND": _email["EMAIL_BACKEND"],
+        "BACKEND": _email_backend,
         "OPTIONS": {key: value for key, value in _email_options.items() if value},
     }
 }
