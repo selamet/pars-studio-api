@@ -22,7 +22,10 @@ RESEND_ENDPOINT = "https://api.resend.com/emails"
 
 class ResendEmailBackend(BaseEmailBackend):
     def __init__(self, fail_silently=False, *, api_key: str = "", timeout: int = 20, **kwargs):
-        super().__init__(fail_silently=fail_silently, **kwargs)
+        # Same shape as Django's SMTP backend: keep fail_silently out of the
+        # kwargs the base class validates against MAILERS options.
+        super().__init__(**kwargs)
+        self.fail_silently = fail_silently
         if not api_key:
             raise ValueError("ResendEmailBackend needs OPTIONS['api_key'].")
         self.api_key = api_key
