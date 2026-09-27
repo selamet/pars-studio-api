@@ -20,6 +20,7 @@ env = environ.Env(
     COOKIE_DOMAIN=(str, ""),
     FRONTEND_URL=(str, "http://localhost:3000"),
     EMAIL_URL=(str, "consolemail://"),
+    RESEND_API_KEY=(str, ""),
     EMAIL_HOST=(str, ""),
     EMAIL_PORT=(int, 465),
     EMAIL_HOST_USER=(str, ""),
@@ -306,9 +307,13 @@ UNFOLD = {
 
 # --- Email, tasks -----------------------------------------------------------
 
-# Email: either discrete SMTP variables (EMAIL_HOST wins, safe for any password
-# characters) or an EMAIL_URL parsed by django-environ. Django 6.1+ wants MAILERS.
-if env("EMAIL_HOST"):
+# Email, in order of precedence: Resend HTTPS API (RESEND_API_KEY; works where SMTP
+# ports are blocked), discrete SMTP variables (EMAIL_HOST), or an EMAIL_URL.
+# Django 6.1+ wants MAILERS.
+if env("RESEND_API_KEY"):
+    _email_backend = "apps.core.mail.ResendEmailBackend"
+    _email_options = {"api_key": env("RESEND_API_KEY")}
+elif env("EMAIL_HOST"):
     _email_backend = "django.core.mail.backends.smtp.EmailBackend"
     _email_options = {
         "host": env("EMAIL_HOST"),
