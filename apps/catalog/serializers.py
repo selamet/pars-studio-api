@@ -60,7 +60,7 @@ class BeatDetailSerializer(BeatListSerializer):
     licenses = BeatLicenseSerializer(many=True, read_only=True)
 
     class Meta(BeatListSerializer.Meta):
-        fields = BeatListSerializer.Meta.fields + ["description", "licenses"]
+        fields = BeatListSerializer.Meta.fields + ["description", "description_tr", "licenses"]
 
 
 class ServiceProductSerializer(serializers.ModelSerializer):
@@ -72,6 +72,7 @@ class ServiceProductSerializer(serializers.ModelSerializer):
             "id",
             "slug",
             "name",
+            "name_tr",
             "kind",
             "kind_label",
             "price_usd",
@@ -79,6 +80,7 @@ class ServiceProductSerializer(serializers.ModelSerializer):
             "included_revisions",
             "max_stems",
             "description",
+            "description_tr",
         ]
 
 

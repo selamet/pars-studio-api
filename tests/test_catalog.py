@@ -103,6 +103,7 @@ def test_services_and_rates_endpoints(api_client):
     services = api_client.get("/api/v1/catalog/services/").json()
     assert [s["slug"] for s in services] == ["single-mastering"]
     assert services[0]["kind_label"] == "Mastering"
+    assert {"name_tr", "description_tr"} <= services[0].keys()
 
     rates = api_client.get("/api/v1/catalog/studio-rates/").json()
     assert rates == [
@@ -152,13 +153,19 @@ def test_bootstrap_catalog_creates_services_and_rates_without_clobbering_edits()
     assert StudioRate.objects.count() == 5
     assert Beat.objects.count() == 0
     assert ServiceProduct.objects.filter(kind=ServiceProduct.Kind.MASTERING).count() == 2
+    assert ServiceProduct.objects.get(slug="mixing").name_tr == "Miks"
 
     mixing = ServiceProduct.objects.get(slug="mixing")
     mixing.price_usd = Decimal("300.00")
+    mixing.name_tr = "Miks (özel)"
+    mixing.description_tr = ""
     mixing.save()
 
     out = StringIO()
     call_command("bootstrap_catalog", stdout=out)
+    mixing.refresh_from_db()
     assert ServiceProduct.objects.count() == 4
-    assert ServiceProduct.objects.get(slug="mixing").price_usd == Decimal("300.00")
+    assert mixing.price_usd == Decimal("300.00")
+    assert mixing.name_tr == "Miks (özel)"  # edited text survives
+    assert mixing.description_tr.startswith("En fazla 40 stem")  # empty field backfilled
     assert "0 created, 9 already existed" in out.getvalue()
