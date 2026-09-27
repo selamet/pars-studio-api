@@ -37,7 +37,7 @@ PostgreSQL and Redis are provided by the `laboflush-stack` host over TLS.
    | `CORS_ALLOWED_ORIGINS` | `https://studiospars.com,https://www.studiospars.com` |
    | `CSRF_TRUSTED_ORIGINS` | `https://studiospars.com,https://www.studiospars.com,https://api.studiospars.com` |
    | `COOKIE_DOMAIN` | `.studiospars.com` |
-   | `EMAIL_URL` | `smtp+ssl://resend:<RESEND_API_KEY>@smtp.resend.com:465` |
+   | `EMAIL_HOST` … | `smtp.resend.com`, `EMAIL_PORT=465`, `EMAIL_HOST_USER=resend`, `EMAIL_HOST_PASSWORD=<RESEND_API_KEY>`, `EMAIL_USE_SSL=true` |
    | `GOOGLE_CLIENT_ID/SECRET` | OAuth client, redirect URI `https://api.studiospars.com/accounts/google/login/callback/` (Google button appears only when set) |
    | `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | keys; webhook endpoint `https://api.studiospars.com/api/v1/stripe/webhook` |
    | `R2_*` | account id, token, bucket names, public bucket domain |
