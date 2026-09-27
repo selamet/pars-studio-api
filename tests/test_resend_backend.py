@@ -53,3 +53,15 @@ def test_resend_backend_surfaces_api_errors():
     with mock.patch("apps.core.mail.urllib.request.urlopen", side_effect=error):
         with pytest.raises(RuntimeError, match="403"):
             backend.send_messages([message])
+
+
+def test_backend_works_through_mailers(settings):
+    """send() goes through mail.mailers, which passes alias= and fail_silently=."""
+    from django.core.mail import EmailMessage
+
+    settings.MAILERS = {
+        "default": {"BACKEND": "apps.core.mail.ResendEmailBackend", "OPTIONS": {"api_key": "re_x"}}
+    }
+    with mock.patch("apps.core.mail.ResendEmailBackend._send") as send:
+        assert EmailMessage("s", "b", "a@example.com", ["b@example.com"]).send() == 1
+    send.assert_called_once()
