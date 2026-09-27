@@ -1,0 +1,8 @@
+# Append to /etc/caddy/Caddyfile on the app server, then `sudo systemctl reload caddy`.
+api.studiospars.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8108 {
+		header_up X-Forwarded-Proto {scheme}
+	}
+	header -Server
+}

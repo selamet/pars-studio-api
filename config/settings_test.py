@@ -24,3 +24,10 @@ MEDIA_ROOT = Path(tempfile.mkdtemp(prefix="pars-test-media-"))  # noqa: F405
 STORAGES["public"]["OPTIONS"]["location"] = MEDIA_ROOT / "public"  # noqa: F405
 STORAGES["private"]["OPTIONS"]["location"] = MEDIA_ROOT / "private"  # noqa: F405
 STORAGES["default"] = STORAGES["public"]  # noqa: F405
+
+# Tests exercise the Google provider wiring regardless of local env.
+if "allauth.socialaccount.providers.google" not in INSTALLED_APPS:  # noqa: F405
+    INSTALLED_APPS.insert(  # noqa: F405
+        INSTALLED_APPS.index("allauth.headless"),  # noqa: F405
+        "allauth.socialaccount.providers.google",
+    )
