@@ -1,0 +1,9 @@
+{% if locale == "tr" %}Merhaba {{ reservation.customer_name }},
+
+#{{ reservation.code }} numaralı rezervasyon ({{ reservation.session_date|date:"d.m.Y" }} {{ reservation.start_time|time:"H:i" }}) iptal edildi. Bir sorun varsa bu e-postayı yanıtla.
+
+Pars Studio{% else %}Hi {{ reservation.customer_name }},
+
+Reservation #{{ reservation.code }} ({{ reservation.session_date|date:"M j, Y" }} {{ reservation.start_time|time:"H:i" }}) has been cancelled. Reply to this email if anything is wrong.
+
+Pars Studio{% endif %}

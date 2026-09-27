@@ -82,7 +82,13 @@ class OrderItem(TimeStampedModel):
         blank=True,
         related_name="order_items",
     )
-    # `reservation` is added in phase 5 (bookings).
+    reservation = models.OneToOneField(
+        "bookings.Reservation",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="order_item",
+    )
     title = models.CharField(max_length=200)
     description = models.CharField(max_length=200, blank=True)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -99,14 +105,19 @@ class OrderItem(TimeStampedModel):
                         item_type="beat_license",
                         beat_license__isnull=False,
                         service_product__isnull=True,
+                        reservation__isnull=True,
                     )
                     | Q(
                         item_type="service",
                         service_product__isnull=False,
                         beat_license__isnull=True,
+                        reservation__isnull=True,
                     )
                     | Q(
-                        item_type="booking", beat_license__isnull=True, service_product__isnull=True
+                        item_type="booking",
+                        reservation__isnull=False,
+                        beat_license__isnull=True,
+                        service_product__isnull=True,
                     )
                 ),
             )

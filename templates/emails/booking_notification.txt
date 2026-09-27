@@ -1,0 +1,15 @@
+New paid studio booking #{{ reservation.code }}.
+
+{{ reservation.get_service_type_display }} — {{ reservation.session_date|date:"Y-m-d" }} {{ reservation.start_time|time:"H:i" }}–{{ reservation.end_time|time:"H:i" }} ({{ reservation.duration_hours }} h) — USD {{ reservation.price_usd }}
+
+Customer: {{ reservation.customer_name }}{% if reservation.artist_name %} ({{ reservation.artist_name }}){% endif %}
+Email: {{ reservation.customer_email }}
+Phone: {{ reservation.customer_phone }}
+{% if reservation.project_description %}
+Project:
+{{ reservation.project_description }}
+{% endif %}{% if reservation.reference_links %}
+References:
+{{ reservation.reference_links }}
+{% endif %}
+Admin: {{ frontend_url }}

@@ -13,6 +13,7 @@ def send_templated_email(
     to: list[str],
     *,
     reply_to: list[str] | None = None,
+    attachments: list[list[str]] | None = None,
 ) -> None:
     """
     Renders `templates/emails/<template>_subject.txt`, `<template>.txt` and,
@@ -32,4 +33,5 @@ def send_templated_email(
         to=to,
         html_body=html_body,
         reply_to=reply_to,
+        attachments=attachments,
     )

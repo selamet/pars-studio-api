@@ -12,6 +12,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 from .models import Order, Payment
+from .services import release_holds
 from .tasks import fulfil_order_task
 
 logger = logging.getLogger(__name__)
@@ -64,12 +65,14 @@ def handle_event(event: dict) -> Payment | None:
             payment_type = Payment.Type.CHECKOUT_EXPIRED
             order.status = Order.Status.CANCELLED
             order.save(update_fields=["status", "updated_at"])
+            release_holds(order)
     elif event_type == "checkout.session.async_payment_failed":
         order = _order_for_session(obj)
         if order and order.status == Order.Status.PENDING:
             payment_type = Payment.Type.PAYMENT_FAILED
             order.status = Order.Status.FAILED
             order.save(update_fields=["status", "updated_at"])
+            release_holds(order)
     elif event_type == "charge.refunded":
         intent = obj.get("payment_intent")
         order = Order.objects.filter(stripe_payment_intent_id=intent).first() if intent else None
@@ -78,10 +81,12 @@ def handle_event(event: dict) -> Payment | None:
             amount = Decimal(obj.get("amount_refunded") or 0) / 100
             order.status = Order.Status.REFUNDED
             order.save(update_fields=["status", "updated_at"])
-            order.items.all()  # grants are revoked below
+            from apps.bookings import services as booking_services
             from apps.downloads.models import DownloadGrant
 
             DownloadGrant.objects.filter(order_item__order=order).update(revoked=True)
+            for item in order.items.filter(reservation__isnull=False).select_related("reservation"):
+                booking_services.cancel(item.reservation)
 
     try:
         payment = Payment.objects.create(

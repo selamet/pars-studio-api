@@ -82,6 +82,7 @@ INSTALLED_APPS = [
     "apps.orders",
     "apps.downloads",
     "apps.services",
+    "apps.bookings",
 ]
 
 MIDDLEWARE = [

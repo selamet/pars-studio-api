@@ -11,6 +11,8 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
+from apps.bookings import services as booking_services
+from apps.bookings.models import Reservation
 from apps.catalog.models import Beat, BeatLicense, ServiceProduct
 
 from .models import Order, OrderItem
@@ -35,9 +37,10 @@ class Line:
     unit_price: object
     beat_license: BeatLicense | None = None
     service_product: ServiceProduct | None = None
+    reservation: Reservation | None = None
 
 
-def _resolve_line(raw: dict) -> Line:
+def _resolve_line(raw: dict, user, locale: str, hold_until) -> Line:
     if raw["type"] == "beat_license":
         try:
             license = (
@@ -68,13 +71,45 @@ def _resolve_line(raw: dict) -> Line:
             unit_price=product.price_usd,
             service_product=product,
         )
+    if raw["type"] == "booking":
+        try:
+            reservation = booking_services.create_hold(
+                user, raw["booking"], hold_until=hold_until, locale=locale
+            )
+        except booking_services.BookingError as exc:
+            raise CheckoutError(exc.code, str(exc), _public_line(raw)) from exc
+        return Line(
+            item_type=OrderItem.ItemType.BOOKING,
+            title=(
+                f"Studio session — {reservation.get_service_type_display()} · "
+                f"{reservation.session_date:%Y-%m-%d} {reservation.start_time:%H:%M}"
+            ),
+            description=f"{reservation.duration_hours} h · #{reservation.code}",
+            unit_price=reservation.price_usd,
+            reservation=reservation,
+        )
     raise CheckoutError("invalid", "Unknown item type.", raw)
+
+
+def _public_line(raw: dict) -> dict:
+    """What we echo back on errors: enough to identify the cart line, no PII."""
+    if raw["type"] == "booking":
+        b = raw["booking"]
+        return {
+            "type": "booking",
+            "service_type": b["service_type"],
+            "session_date": str(b["session_date"]),
+            "start_time": b["start_time"].strftime("%H:%M"),
+            "duration_hours": b["duration_hours"],
+        }
+    return {"type": raw["type"], "id": raw["id"]}
 
 
 @transaction.atomic
 def build_order(user, raw_items: list[dict], locale: str) -> Order:
     """Create a pending order from cart lines. Prices always come from the database."""
-    lines = [_resolve_line(raw) for raw in raw_items]
+    hold_until = timezone.now() + timedelta(minutes=settings.CHECKOUT_SESSION_TTL_MINUTES)
+    lines = [_resolve_line(raw, user, locale, hold_until) for raw in raw_items]
     exclusive_beats = {
         line.beat_license.beat_id
         for line in lines
@@ -100,9 +135,16 @@ def build_order(user, raw_items: list[dict], locale: str) -> Order:
             unit_price=line.unit_price,
             beat_license=line.beat_license,
             service_product=line.service_product,
+            reservation=line.reservation,
         )
     order.recalculate()
     return order
+
+
+def release_holds(order: Order, *, to=Reservation.Status.EXPIRED) -> None:
+    """Free the studio slots held by an order that will not be paid."""
+    for item in order.items.filter(reservation__isnull=False).select_related("reservation"):
+        booking_services.release_hold(item.reservation, to=to)
 
 
 def create_checkout_session(order: Order) -> str:
@@ -149,6 +191,7 @@ def expire_pending_orders(now=None) -> int:
     for order in stale:
         order.status = Order.Status.CANCELLED
         order.save(update_fields=["status", "updated_at"])
+        release_holds(order)
         count += 1
     if count:
         logger.info("Expired %d pending order(s)", count)

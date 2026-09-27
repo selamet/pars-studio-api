@@ -1,0 +1,27 @@
+{% if locale == "tr" %}Merhaba {{ reservation.customer_name }},
+
+Seansın onaylandı. Detaylar:
+
+Hizmet: {{ reservation.get_service_type_display }}
+Tarih: {{ reservation.session_date|date:"d.m.Y" }}
+Saat: {{ reservation.start_time|time:"H:i" }} – {{ reservation.end_time|time:"H:i" }} ({{ reservation.duration_hours }} saat)
+Kod: #{{ reservation.code }}
+
+Takvim dosyası ekte. Değişiklik gerekirse bu e-postayı yanıtla.
+
+{{ frontend_url }}/tr/account/bookings
+
+Pars Studio{% else %}Hi {{ reservation.customer_name }},
+
+Your session is confirmed. Details:
+
+Service: {{ reservation.get_service_type_display }}
+Date: {{ reservation.session_date|date:"M j, Y" }}
+Time: {{ reservation.start_time|time:"H:i" }} – {{ reservation.end_time|time:"H:i" }} ({{ reservation.duration_hours }} h)
+Code: #{{ reservation.code }}
+
+A calendar file is attached. Reply to this email if anything needs to change.
+
+{{ frontend_url }}/en/account/bookings
+
+Pars Studio{% endif %}
