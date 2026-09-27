@@ -1,0 +1,1 @@
+{{ order_number }} — {{ service_order.service_product.name }}: {{ status_label }}

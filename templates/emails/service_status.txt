@@ -1,0 +1,13 @@
+Hi,
+
+Your {{ service_order.service_product.name }} order ({{ order_number }}) is now: {{ status_label }}.
+{% if event.message %}
+Note from the studio:
+{{ event.message }}
+{% endif %}{% if event.to_status == "delivered" %}
+Your files are ready. Download them, and request a revision if something needs
+changing ({{ service_order.revisions_left }} included revision(s) left):
+{% endif %}
+{{ frontend_url }}/{{ locale }}/account/services/{{ service_order.id }}
+
+{{ site_name }}

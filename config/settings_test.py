@@ -1,5 +1,7 @@
 """Settings used by pytest: fast hashing, in-memory email, immediate tasks."""
 
+from pathlib import Path
+
 from .settings import *  # noqa: F403
 
 DEBUG = False
@@ -15,3 +17,10 @@ ACCOUNT_RATE_LIMITS = {}
 
 STRIPE_SECRET_KEY = "sk_test_dummy"  # noqa: S105
 STRIPE_WEBHOOK_SECRET = "whsec_test_dummy"  # noqa: S105
+
+import tempfile  # noqa: E402
+
+MEDIA_ROOT = Path(tempfile.mkdtemp(prefix="pars-test-media-"))  # noqa: F405
+STORAGES["public"]["OPTIONS"]["location"] = MEDIA_ROOT / "public"  # noqa: F405
+STORAGES["private"]["OPTIONS"]["location"] = MEDIA_ROOT / "private"  # noqa: F405
+STORAGES["default"] = STORAGES["public"]  # noqa: F405
