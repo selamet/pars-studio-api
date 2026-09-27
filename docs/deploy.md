@@ -65,6 +65,9 @@ Pulls, rebuilds, restarts (`web` runs `migrate` before gunicorn) and waits for
 
 - Logs: `docker compose logs -f web worker` (in the app dir)
 - Django shell: `docker compose exec web python manage.py shell`
+- First catalog content: `docker compose exec web python manage.py bootstrap_catalog` creates the
+  service products and hourly rates (create-only; edit prices in the admin afterwards). Beats are
+  added in the admin because they need audio files.
 - Cron (`crontab -l`): pending orders and reservation holds expire every 10 min,
   task results are pruned nightly; output in `cron.log`.
 - The worker delivers emails and runs fulfilment; if it is down, tasks queue in

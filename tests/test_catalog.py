@@ -138,3 +138,27 @@ def test_seed_catalog_is_idempotent(django_db_blocker):
     assert BeatLicense.objects.count() == 16
     assert ServiceProduct.objects.count() == 2
     assert StudioRate.objects.count() == 5
+
+
+@pytest.mark.django_db
+def test_bootstrap_catalog_creates_services_and_rates_without_clobbering_edits():
+    from decimal import Decimal
+    from io import StringIO
+
+    from django.core.management import call_command
+
+    call_command("bootstrap_catalog", stdout=StringIO())
+    assert ServiceProduct.objects.count() == 4
+    assert StudioRate.objects.count() == 5
+    assert Beat.objects.count() == 0
+    assert ServiceProduct.objects.filter(kind=ServiceProduct.Kind.MASTERING).count() == 2
+
+    mixing = ServiceProduct.objects.get(slug="mixing")
+    mixing.price_usd = Decimal("300.00")
+    mixing.save()
+
+    out = StringIO()
+    call_command("bootstrap_catalog", stdout=out)
+    assert ServiceProduct.objects.count() == 4
+    assert ServiceProduct.objects.get(slug="mixing").price_usd == Decimal("300.00")
+    assert "0 created, 9 already existed" in out.getvalue()
