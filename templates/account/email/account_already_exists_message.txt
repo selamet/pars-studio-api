@@ -1,0 +1,13 @@
+{% autoescape off %}{% if locale == "tr" %}Merhaba,
+
+{{ email }} adresiyle yeni bir hesap açılmaya çalışıldı, ancak bu adresle zaten bir hesabın var. Şifreni hatırlamıyorsan buradan sıfırlayabilirsin:
+
+{{ password_reset_url }}
+
+{{ site_name }}{% else %}Hi,
+
+Someone tried to sign up with {{ email }}, but an account with this address already exists. If you forgot your password, reset it here:
+
+{{ password_reset_url }}
+
+{{ site_name }}{% endif %}{% endautoescape %}

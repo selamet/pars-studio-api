@@ -85,6 +85,30 @@ def fulfil_order(order: Order) -> None:
         order.fulfilment_notes = "\n".join(problems)
         order.save(update_fields=["fulfilled_at", "fulfilment_notes", "updated_at"])
 
+    send_order_emails(order, problems)
+
+
+def send_order_emails(order: Order, problems: list[str], *, notify_studio: bool = True) -> None:
+    """Customer confirmation in the order's language; the studio is told in Turkish."""
     context = {"order": order, "items": list(order.items.all()), "problems": problems}
-    send_templated_email("order_confirmation", context, [order.customer_email])
-    send_templated_email("order_notification", context, [settings.STUDIO_NOTIFICATION_EMAIL])
+    send_templated_email(
+        "order_confirmation",
+        {
+            **context,
+            "cta_url": f"{settings.FRONTEND_URL}/{order.locale}/account/orders/{order.number}",
+            "cta_label": "Siparişi aç" if order.locale == "tr" else "Open your order",
+        },
+        [order.customer_email],
+        locale=order.locale,
+    )
+    if notify_studio:
+        send_templated_email(
+            "order_notification",
+            {
+                **context,
+                "cta_url": f"{settings.API_URL}/admin/orders/order/{order.pk}/change/",
+                "cta_label": "Admin'de aç",
+            },
+            [settings.STUDIO_NOTIFICATION_EMAIL],
+            locale="tr",
+        )

@@ -2,7 +2,7 @@
 
 Seansın onaylandı. Detaylar:
 
-Hizmet: {{ reservation.get_service_type_display }}
+Hizmet: {{ service_label }}
 Tarih: {{ reservation.session_date|date:"d.m.Y" }}
 Saat: {{ reservation.start_time|time:"H:i" }} – {{ reservation.end_time|time:"H:i" }} ({{ reservation.duration_hours }} saat)
 Kod: #{{ reservation.code }}
@@ -15,7 +15,7 @@ Pars Studio{% else %}Hi {{ reservation.customer_name }},
 
 Your session is confirmed. Details:
 
-Service: {{ reservation.get_service_type_display }}
+Service: {{ service_label }}
 Date: {{ reservation.session_date|date:"M j, Y" }}
 Time: {{ reservation.start_time|time:"H:i" }} – {{ reservation.end_time|time:"H:i" }} ({{ reservation.duration_hours }} h)
 Code: #{{ reservation.code }}

@@ -133,6 +133,23 @@ def release_hold(reservation: Reservation, *, to=Reservation.Status.EXPIRED) -> 
         reservation.save(update_fields=["status", "updated_at"])
 
 
+SERVICE_LABELS_TR = {
+    "recording": "Kayıt",
+    "mixing": "Miks seansı",
+    "mastering": "Mastering seansı",
+    "beat": "Beat prodüksiyon",
+    "vocal": "Vokal prodüksiyon",
+}
+
+
+def _email_context(reservation: Reservation, locale: str | None = None) -> dict:
+    locale = locale or reservation.locale
+    label = reservation.get_service_type_display()
+    if locale == "tr":
+        label = SERVICE_LABELS_TR.get(reservation.service_type, label)
+    return {"reservation": reservation, "service_label": label}
+
+
 def confirm(reservation: Reservation) -> None:
     """Payment arrived: lock the slot in and tell everyone."""
     if reservation.status != Reservation.Status.HOLD:
@@ -140,16 +157,29 @@ def confirm(reservation: Reservation) -> None:
     reservation.status = Reservation.Status.CONFIRMED
     reservation.hold_expires_at = None
     reservation.save(update_fields=["status", "hold_expires_at", "updated_at"])
-    context = {"reservation": reservation, "locale": reservation.locale}
     send_templated_email(
         "booking_confirmed",
-        context,
+        {
+            **_email_context(reservation),
+            "cta_url": f"{settings.FRONTEND_URL}/{reservation.locale}/account/bookings",
+            "cta_label": "Rezervasyonlarım" if reservation.locale == "tr" else "My bookings",
+        },
         [reservation.customer_email],
+        locale=reservation.locale,
         attachments=[
             [f"pars-studio-{reservation.code}.ics", build_ics(reservation), "text/calendar"]
         ],
     )
-    send_templated_email("booking_notification", context, [settings.STUDIO_NOTIFICATION_EMAIL])
+    send_templated_email(
+        "booking_notification",
+        {
+            **_email_context(reservation, "tr"),
+            "cta_url": f"{settings.API_URL}/admin/bookings/reservation/{reservation.pk}/change/",
+            "cta_label": "Admin'de aç",
+        },
+        [settings.STUDIO_NOTIFICATION_EMAIL],
+        locale="tr",
+    )
 
 
 def cancel(reservation: Reservation, *, notify: bool = True) -> None:
@@ -161,8 +191,9 @@ def cancel(reservation: Reservation, *, notify: bool = True) -> None:
     if notify and was_confirmed:
         send_templated_email(
             "booking_cancelled",
-            {"reservation": reservation, "locale": reservation.locale},
+            _email_context(reservation),
             [reservation.customer_email],
+            locale=reservation.locale,
         )
 
 

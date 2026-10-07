@@ -1,0 +1,9 @@
+{% extends "emails/base.html" %}
+{% block preheader %}{% if locale == "tr" %}Hesabını etkinleştirmek için e-postanı doğrula.{% else %}Confirm your email to activate your account.{% endif %}{% endblock %}
+{% block eyebrow %}{% if locale == "tr" %}Hesap{% else %}Account{% endif %}{% endblock %}
+{% block heading %}{% if locale == "tr" %}E-postanı doğrula.{% else %}Confirm your email.{% endif %}{% endblock %}
+{% block content %}
+<p style="margin:0;">{% if locale == "tr" %}{{ site_name }} hesabın için <span style="color:#ece8df;">{{ email }}</span> adresini doğrulaman gerekiyor. Doğruladıktan sonra beat satın alabilir, hizmet siparişi verebilir ve stüdyo rezervasyonu yapabilirsin.{% else %}Confirm <span style="color:#ece8df;">{{ email }}</span> for your {{ site_name }} account. Once confirmed you can buy beats, order services and book studio time.{% endif %}</p>
+{% endblock %}
+{% block cta_wrap %}{% with cta_url=activate_url %}{% if locale == "tr" %}{% with cta_label="E-postayı doğrula" %}{{ block.super }}{% endwith %}{% else %}{% with cta_label="Confirm email" %}{{ block.super }}{% endwith %}{% endif %}{% endwith %}{% endblock %}
+{% block footer %}{% if locale == "tr" %}Bu isteği sen yapmadıysan e-postayı yok sayabilirsin.{% else %}If you didn't request this, you can safely ignore this email.{% endif %}{% endblock %}

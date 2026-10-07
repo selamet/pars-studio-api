@@ -1,0 +1,1 @@
+{% if locale == "tr" %}Bu e-postayla bir hesap bulunamadı{% else %}No account found for this email{% endif %}

@@ -1,0 +1,18 @@
+{% extends "emails/base.html" %}
+{% block preheader %}{{ reservation.customer_name }} — {{ reservation.session_date|date:"d.m.Y" }} {{ reservation.start_time|time:"H:i" }}{% endblock %}
+{% block eyebrow %}Yeni rezervasyon · #{{ reservation.code }}{% endblock %}
+{% block heading %}{{ service_label }} — {{ reservation.session_date|date:"d.m.Y" }}{% endblock %}
+{% block content %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+  {% with start=reservation.start_time|time:"H:i" end=reservation.end_time|time:"H:i" %}{% with when=start|add:" – "|add:end %}{% include "emails/_row.html" with label="Saat" value=when %}{% endwith %}{% endwith %}
+  {% include "emails/_row.html" with label="Süre" value=reservation.duration_hours|stringformat:"d"|add:" saat" %}
+  {% with price=reservation.price_usd|stringformat:"s" %}{% with amount="$"|add:price %}{% include "emails/_row.html" with label="Ücret" value=amount %}{% endwith %}{% endwith %}
+  {% include "emails/_row.html" with label="Müşteri" value=reservation.customer_name %}
+  {% if reservation.artist_name %}{% include "emails/_row.html" with label="Sanatçı" value=reservation.artist_name %}{% endif %}
+  {% include "emails/_row.html" with label="E-posta" value=reservation.customer_email %}
+  {% if reservation.customer_phone %}{% include "emails/_row.html" with label="Telefon" value=reservation.customer_phone %}{% endif %}
+  {% if reservation.project_description %}{% include "emails/_row.html" with label="Proje" value=reservation.project_description %}{% endif %}
+  {% if reservation.reference_links %}{% include "emails/_row.html" with label="Referanslar" value=reservation.reference_links %}{% endif %}
+</table>
+{% endblock %}
+{% block footer %}Bu bildirim stüdyo ekibine gönderildi.{% endblock %}
