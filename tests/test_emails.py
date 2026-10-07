@@ -34,7 +34,12 @@ def test_signup_email_is_branded_in_the_browser_language(
 ):
     api_client.post(
         f"{HEADLESS}/auth/signup",
-        {"email": f"new-{accept_language[:2]}@example.com", "password": "long-and-random-42"},
+        {
+            "email": f"new-{accept_language[:2]}@example.com",
+            "password": "long-and-random-42",
+            "first_name": "Ada",
+            "last_name": "Lovelace",
+        },
         format="json",
         HTTP_ACCEPT_LANGUAGE=accept_language,
     )

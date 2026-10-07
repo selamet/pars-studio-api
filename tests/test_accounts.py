@@ -33,14 +33,20 @@ def test_me_returns_profile_and_allows_name_update(api_client, verified_user):
 def test_signup_requires_email_verification_then_logs_in(api_client, django_user_model):
     response = api_client.post(
         f"{HEADLESS}/auth/signup",
-        {"email": "new@example.com", "password": "long-and-random-42"},
+        {
+            "email": "new@example.com",
+            "password": "long-and-random-42",
+            "first_name": " Ada ",
+            "last_name": "Lovelace",
+        },
         format="json",
     )
     # 401 with a pending verify_email flow: the account exists but is not usable yet.
     assert response.status_code == 401
     flows = {flow["id"]: flow for flow in response.json()["data"]["flows"]}
     assert flows["verify_email"]["is_pending"] is True
-    assert django_user_model.objects.filter(email="new@example.com").exists()
+    new_user = django_user_model.objects.get(email="new@example.com")
+    assert (new_user.first_name, new_user.last_name) == ("Ada", "Lovelace")
 
     # The verification mail was rendered in-request and delivered by the (immediate) task.
     assert len(mail.outbox) == 1
@@ -57,6 +63,19 @@ def test_signup_requires_email_verification_then_logs_in(api_client, django_user
     response = api_client.get("/api/v1/me")
     assert response.status_code == 200
     assert response.json()["email_verified"] is True
+
+
+@pytest.mark.django_db
+def test_signup_requires_first_and_last_name(api_client, django_user_model):
+    response = api_client.post(
+        f"{HEADLESS}/auth/signup",
+        {"email": "new@example.com", "password": "long-and-random-42"},
+        format="json",
+    )
+    assert response.status_code == 400
+    assert {error["param"] for error in response.json()["errors"]} == {"first_name", "last_name"}
+    assert not django_user_model.objects.filter(email="new@example.com").exists()
+    assert mail.outbox == []
 
 
 @pytest.mark.django_db
