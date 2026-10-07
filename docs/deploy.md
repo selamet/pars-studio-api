@@ -35,6 +35,7 @@ PostgreSQL and Redis are provided by the `laboflush-stack` host over TLS.
    | `WEB_PORT` | `8108` |
    | `DATABASE_URL` / `DATABASE_POOLED` | PgBouncer string / `true` |
    | `FRONTEND_URL` | `https://studiospars.com` |
+   | `API_URL` | `https://api.studiospars.com` |
    | `CORS_ALLOWED_ORIGINS` | `https://studiospars.com,https://www.studiospars.com` |
    | `CSRF_TRUSTED_ORIGINS` | `https://studiospars.com,https://www.studiospars.com,https://api.studiospars.com` |
    | `COOKIE_DOMAIN` | `.studiospars.com` |

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="{{ locale|default:'en' }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="supported-color-schemes" content="dark">
+    <title>{% block title %}{{ site_name }}{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+  </head>
+  <body style="margin:0;padding:0;background:#0a0908;color:#ece8df;font-family:Manrope,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">{% block preheader %}{% endblock %}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0908;">
+      <tr>
+        <td align="center" style="padding:40px 16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
+            <tr>
+              <td style="padding:0 0 32px;border-bottom:1px solid rgba(236,232,223,0.1);">
+                <a href="{{ frontend_url }}/{{ locale|default:'en' }}" style="text-decoration:none;">
+                  <img src="{{ logo_url }}" width="150" alt="{{ site_name }}" style="display:block;width:150px;height:auto;border:0;">
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:36px 0 0;">
+                {% block eyebrow_wrap %}<p style="margin:0 0 14px;font-family:'JetBrains Mono',Menlo,Consolas,monospace;font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:#c9a96e;">{% block eyebrow %}{% endblock %}</p>{% endblock %}
+                <h1 style="margin:0 0 20px;font-family:Fraunces,Georgia,'Times New Roman',serif;font-weight:300;font-size:30px;line-height:1.2;color:#ece8df;">{% block heading %}{% endblock %}</h1>
+                <div style="font-size:15px;line-height:1.7;color:#c9c4ba;">{% block content %}{% endblock %}</div>
+                {% block cta_wrap %}{% if cta_url %}
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:32px 0 8px;">
+                  <tr>
+                    <td style="background:#ece8df;">
+                      <a href="{{ cta_url }}" style="display:inline-block;padding:15px 28px;font-family:'JetBrains Mono',Menlo,Consolas,monospace;font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:#0a0908;text-decoration:none;">{{ cta_label }}</a>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:12px 0 0;font-size:12px;line-height:1.6;color:#6f695f;word-break:break-all;">{% if locale == "tr" %}Buton çalışmazsa bu bağlantıyı aç:{% else %}If the button doesn't work, open this link:{% endif %}<br><a href="{{ cta_url }}" style="color:#a39c91;">{{ cta_url }}</a></p>
+                {% endif %}{% endblock %}
+                {% block after_cta %}{% endblock %}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:40px 0 0;">
+                <div style="border-top:1px solid rgba(236,232,223,0.1);padding-top:24px;font-size:12px;line-height:1.7;color:#6f695f;">
+                  {% block footer %}{% if locale == "tr" %}Bir sorunun varsa bu e-postayı yanıtlaman yeterli.{% else %}Questions? Just reply to this email.{% endif %}{% endblock %}<br>
+                  <a href="{{ frontend_url }}/{{ locale|default:'en' }}" style="color:#a39c91;text-decoration:none;">{{ site_name }}</a>                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

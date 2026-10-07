@@ -19,6 +19,7 @@ env = environ.Env(
     CSRF_TRUSTED_ORIGINS=(list, ["http://localhost:3000"]),
     COOKIE_DOMAIN=(str, ""),
     FRONTEND_URL=(str, "http://localhost:3000"),
+    API_URL=(str, "http://localhost:8000"),
     EMAIL_URL=(str, "consolemail://"),
     RESEND_API_KEY=(str, ""),
     EMAIL_HOST=(str, ""),
@@ -59,6 +60,8 @@ DEBUG = env("DEBUG")
 # 127.0.0.1) and the host reverse proxy work without listing them per deploy.
 ALLOWED_HOSTS = list(dict.fromkeys([*env("ALLOWED_HOSTS"), "127.0.0.1", "localhost"]))
 FRONTEND_URL = env("FRONTEND_URL").rstrip("/")
+# Public origin of this API; studio emails link to its admin.
+API_URL = env("API_URL").rstrip("/")
 
 INSTALLED_APPS = [
     # Unfold must precede django.contrib.admin.
@@ -169,7 +172,7 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = False
 # Clicking the verification link (in the same browser) signs the user in right away.
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
-ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Pars Studio] "
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "Pars Studio — "
 ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = False
 ACCOUNT_RATE_LIMITS = {
     "login_failed": "10/m/ip,5/5m/key",
@@ -366,6 +369,7 @@ SERVICE_UPLOAD_EXTENSIONS = ("wav", "aif", "aiff", "flac", "mp3", "zip")
 # --- I18n, static, media ----------------------------------------------------
 
 LANGUAGE_CODE = "en"
+LANGUAGES = [("en", "English"), ("tr", "Türkçe")]
 TIME_ZONE = "Europe/Istanbul"
 USE_I18N = True
 USE_TZ = True

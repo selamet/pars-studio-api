@@ -1,0 +1,22 @@
+{% extends "emails/base.html" %}
+{% block preheader %}{{ order.customer_email }} — ${{ order.total }}{% endblock %}
+{% block eyebrow %}Yeni sipariş · {{ order.number }}{% endblock %}
+{% block heading %}${{ order.total }} tutarında ödeme alındı.{% endblock %}
+{% block content %}
+<p style="margin:0 0 8px;">Müşteri: <a href="mailto:{{ order.customer_email }}" style="color:#ece8df;">{{ order.customer_email }}</a> · Dil: {{ order.locale|upper }}</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 0;border-collapse:collapse;">
+  {% for item in items %}
+  <tr>
+    <td style="padding:14px 0;border-top:1px solid rgba(236,232,223,0.1);color:#ece8df;">{{ item.title }}<br><span style="font-size:12px;color:#8a847a;">{{ item.get_item_type_display }}</span></td>
+    <td style="padding:14px 0;border-top:1px solid rgba(236,232,223,0.1);text-align:right;white-space:nowrap;font-family:'JetBrains Mono',Menlo,Consolas,monospace;color:#ece8df;">${{ item.line_total }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% if problems %}
+<div style="margin:24px 0 0;padding:16px 18px;border:1px solid #c9a96e;color:#ece8df;">
+  <p style="margin:0 0 8px;font-family:'JetBrains Mono',Menlo,Consolas,monospace;font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:#c9a96e;">Elle müdahale gerekiyor</p>
+  {% for problem in problems %}<p style="margin:0;">— {{ problem }}</p>{% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+{% block footer %}Bu bildirim stüdyo ekibine gönderildi.{% endblock %}

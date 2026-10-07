@@ -1,15 +1,15 @@
-New paid studio booking #{{ reservation.code }}.
+Yeni ödenmiş rezervasyon #{{ reservation.code }}.
 
-{{ reservation.get_service_type_display }} — {{ reservation.session_date|date:"Y-m-d" }} {{ reservation.start_time|time:"H:i" }}–{{ reservation.end_time|time:"H:i" }} ({{ reservation.duration_hours }} h) — USD {{ reservation.price_usd }}
+{{ service_label }} — {{ reservation.session_date|date:"d.m.Y" }} {{ reservation.start_time|time:"H:i" }}–{{ reservation.end_time|time:"H:i" }} ({{ reservation.duration_hours }} saat) — ${{ reservation.price_usd }}
 
-Customer: {{ reservation.customer_name }}{% if reservation.artist_name %} ({{ reservation.artist_name }}){% endif %}
-Email: {{ reservation.customer_email }}
-Phone: {{ reservation.customer_phone }}
+Müşteri: {{ reservation.customer_name }}{% if reservation.artist_name %} ({{ reservation.artist_name }}){% endif %}
+E-posta: {{ reservation.customer_email }}
+Telefon: {{ reservation.customer_phone }}
 {% if reservation.project_description %}
-Project:
+Proje:
 {{ reservation.project_description }}
 {% endif %}{% if reservation.reference_links %}
-References:
+Referanslar:
 {{ reservation.reference_links }}
 {% endif %}
-Admin: {{ frontend_url }}
+Admin: {{ cta_url }}

@@ -1,10 +1,10 @@
-New paid order {{ order.number }} from {{ order.customer_email }}.
+Yeni ödenmiş sipariş {{ order.number }} — {{ order.customer_email }} ({{ order.locale|upper }}).
 
-{% for item in items %}- {{ item.title }} ({{ item.get_item_type_display }}) — {{ order.currency }} {{ item.line_total }}
+{% for item in items %}- {{ item.title }} ({{ item.get_item_type_display }}) — ${{ item.line_total }}
 {% endfor %}
-Total: {{ order.currency }} {{ order.total }}
+Toplam: ${{ order.total }}
 {% if problems %}
-ATTENTION — fulfilment problems:
+DİKKAT — elle müdahale gerekiyor:
 {% for problem in problems %}- {{ problem }}
 {% endfor %}{% endif %}
-Admin: {{ frontend_url }}
+Admin: {{ cta_url }}

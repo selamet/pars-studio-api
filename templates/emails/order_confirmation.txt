@@ -1,15 +1,29 @@
-Hi,
+{% if locale == "tr" %}Merhaba,
+
+{{ site_name }} siparişin için teşekkürler. {{ order.number }} numaralı siparişin ödemesi alındı.
+
+{% for item in items %}- {{ item.title }} — ${{ item.line_total }}
+{% endfor %}
+Toplam: ${{ order.total }}
+
+Sipariş detayların ve indirmelerin:
+{{ cta_url }}
+
+Beat indirme bağlantıları 30 gün ve sınırlı sayıda indirme için geçerlidir.
+Uzatmak istersen bu e-postayı yanıtla.
+
+{{ site_name }}{% else %}Hi,
 
 Thanks for your order at {{ site_name }}. Payment for {{ order.number }} was received.
 
-{% for item in items %}- {{ item.title }} — {{ order.currency }} {{ item.line_total }}
+{% for item in items %}- {{ item.title }} — ${{ item.line_total }}
 {% endfor %}
-Total: {{ order.currency }} {{ order.total }}
+Total: ${{ order.total }}
 
 Your downloads and order details:
-{{ frontend_url }}/{{ order.locale }}/account/orders/{{ order.number }}
+{{ cta_url }}
 
 Download links are valid for 30 days and a limited number of downloads. If you
 need them extended, reply to this email.
 
-{{ site_name }}
+{{ site_name }}{% endif %}

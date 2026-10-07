@@ -1,6 +1,18 @@
-Hi,
+{% if locale == "tr" %}Merhaba,
 
-Your {{ service_order.service_product.name }} order ({{ order_number }}) is now: {{ status_label }}.
+{{ product_name }} siparişinin ({{ order_number }}) durumu: {{ status_label }}.
+{% if event.message %}
+Stüdyodan not:
+{{ event.message }}
+{% endif %}{% if event.to_status == "delivered" %}
+Dosyaların hazır. İndirebilir, bir şeyin değişmesi gerekirse revizyon isteyebilirsin
+({{ service_order.revisions_left }} revizyon hakkın kaldı):
+{% endif %}
+{{ cta_url }}
+
+{{ site_name }}{% else %}Hi,
+
+Your {{ product_name }} order ({{ order_number }}) is now: {{ status_label }}.
 {% if event.message %}
 Note from the studio:
 {{ event.message }}
@@ -8,6 +20,6 @@ Note from the studio:
 Your files are ready. Download them, and request a revision if something needs
 changing ({{ service_order.revisions_left }} included revision(s) left):
 {% endif %}
-{{ frontend_url }}/{{ locale }}/account/services/{{ service_order.id }}
+{{ cta_url }}
 
-{{ site_name }}
+{{ site_name }}{% endif %}

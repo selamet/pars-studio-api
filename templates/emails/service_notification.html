@@ -1,0 +1,13 @@
+{% extends "emails/base.html" %}
+{% block preheader %}{{ service_order.user.email }} — {{ status_label }}{% endblock %}
+{% block eyebrow %}Hizmet siparişi · {{ order_number }}{% endblock %}
+{% block heading %}{{ product_name }}: {{ status_label }}{% endblock %}
+{% block content %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+  {% include "emails/_row.html" with label="Müşteri" value=service_order.user.email %}
+  {% with count=service_order.files.count|stringformat:"d" %}{% include "emails/_row.html" with label="Dosya" value=count %}{% endwith %}
+  {% if service_order.due_at %}{% include "emails/_row.html" with label="Teslim" value=service_order.due_at|date:"d.m.Y" %}{% endif %}
+  {% if event.message %}{% include "emails/_row.html" with label="Mesaj" value=event.message %}{% endif %}
+</table>
+{% endblock %}
+{% block footer %}Bu bildirim stüdyo ekibine gönderildi.{% endblock %}
