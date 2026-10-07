@@ -22,6 +22,18 @@ services:
     restart: unless-stopped
     env_file: .env
     command: ["python", "manage.py", "db_worker", "--queue-name", "default"]
+    # The image's HEALTHCHECK curls the web port, which the worker does not serve.
+    # The worker only needs its task queue, so check that the database is reachable.
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import django; django.setup(); from django.db import connection; connection.ensure_connection()"
+      interval: 60s
+      timeout: 15s
+      start_period: 30s
+      retries: 3
     volumes:
       - media:/app/media
     depends_on:
