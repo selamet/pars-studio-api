@@ -71,6 +71,7 @@ def completed_event(order: Order, event_id="evt_1", paid=True, amount=None):
                 "payment_status": "paid" if paid else "unpaid",
                 "payment_intent": "pi_test_1",
                 "amount_total": int((amount or order.total) * 100),
+                "currency": order.currency.lower(),
                 "metadata": {"order_id": str(order.pk), "order_number": order.number},
             }
         },
@@ -229,6 +230,32 @@ def test_completed_session_marks_paid_fulfils_and_emails(
         [verified_user.email, settings.STUDIO_NOTIFICATION_EMAIL]
     )
     assert pending_order.number in mail.outbox[0].subject
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "override",
+    [{"amount_total": 100}, {"currency": "eur"}],
+    ids=["amount", "currency"],
+)
+def test_completed_session_with_mismatched_total_stays_pending(
+    client, pending_order, override, django_capture_on_commit_callbacks
+):
+    event = completed_event(pending_order)
+    event["data"]["object"].update(override)
+    with django_capture_on_commit_callbacks(execute=True):
+        response = post_webhook(client, event)
+    assert response.status_code == 200
+
+    pending_order.refresh_from_db()
+    assert pending_order.status == Order.Status.PENDING
+    assert pending_order.paid_at is None
+    assert not DownloadGrant.objects.exists()
+    assert mail.outbox == []
+
+    payment = Payment.objects.get(provider_event_id="evt_1")
+    assert payment.order == pending_order
+    assert payment.type == Payment.Type.AMOUNT_MISMATCH
 
 
 @pytest.mark.django_db
