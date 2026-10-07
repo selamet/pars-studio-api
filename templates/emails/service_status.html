@@ -1,0 +1,16 @@
+{% extends "emails/base.html" %}
+{% block preheader %}{{ product_name }} — {{ status_label }}{% endblock %}
+{% block eyebrow %}{% if locale == "tr" %}Sipariş{% else %}Order{% endif %} {{ order_number }}{% endblock %}
+{% block heading %}{% if event.to_status == "delivered" %}{% if locale == "tr" %}Dosyaların hazır.{% else %}Your files are ready.{% endif %}{% elif event.to_status == "completed" %}{% if locale == "tr" %}Siparişin tamamlandı.{% else %}Your order is complete.{% endif %}{% else %}{% if locale == "tr" %}Siparişin üzerinde çalışıyoruz.{% else %}We're working on your order.{% endif %}{% endif %}{% endblock %}
+{% block content %}
+<p style="margin:0;">{% if locale == "tr" %}{{ product_name }} siparişinin yeni durumu:{% else %}Your {{ product_name }} order is now:{% endif %} <span style="color:#c9a96e;">{{ status_label }}</span>.</p>
+{% if event.message %}
+<div style="margin:24px 0 0;padding:16px 18px;border-left:2px solid #c9a96e;background:#14110f;color:#ece8df;">
+  <p style="margin:0 0 6px;font-family:'JetBrains Mono',Menlo,Consolas,monospace;font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:#8a847a;">{% if locale == "tr" %}Stüdyodan not{% else %}Note from the studio{% endif %}</p>
+  {{ event.message|linebreaksbr }}
+</div>
+{% endif %}
+{% if event.to_status == "delivered" %}
+<p style="margin:24px 0 0;">{% if locale == "tr" %}Dosyalarını indir; bir şeyin değişmesi gerekirse sipariş sayfasından revizyon iste. Kalan revizyon hakkın: {{ service_order.revisions_left }}.{% else %}Download your files, and request a revision from the order page if something needs changing. Revisions left: {{ service_order.revisions_left }}.{% endif %}</p>
+{% endif %}
+{% endblock %}

@@ -1,1 +1,1 @@
-Order {{ order.number }} confirmed — thank you
+{% if locale == "tr" %}Pars Studio — Siparişin onaylandı ({{ order.number }}){% else %}Pars Studio — Order {{ order.number }} confirmed{% endif %}

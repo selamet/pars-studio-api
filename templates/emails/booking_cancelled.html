@@ -1,0 +1,8 @@
+{% extends "emails/base.html" %}
+{% block preheader %}{% if locale == "tr" %}#{{ reservation.code }} numaralı rezervasyon iptal edildi.{% else %}Booking #{{ reservation.code }} was cancelled.{% endif %}{% endblock %}
+{% block eyebrow %}{% if locale == "tr" %}Rezervasyon #{{ reservation.code }}{% else %}Booking #{{ reservation.code }}{% endif %}{% endblock %}
+{% block heading %}{% if locale == "tr" %}Rezervasyonun iptal edildi.{% else %}Your booking was cancelled.{% endif %}{% endblock %}
+{% block content %}
+<p style="margin:0;">{% if locale == "tr" %}Merhaba {{ reservation.customer_name }}, {{ reservation.session_date|date:"d.m.Y" }} {{ reservation.start_time|time:"H:i" }} tarihli {{ service_label }} rezervasyonun iptal edildi.{% else %}Hi {{ reservation.customer_name }}, your {{ service_label|lower }} booking on {{ reservation.session_date|date:"M j, Y" }} at {{ reservation.start_time|time:"H:i" }} has been cancelled.{% endif %}</p>
+{% endblock %}
+{% block footer %}{% if locale == "tr" %}Bir hata olduğunu düşünüyorsan bu e-postayı yanıtla.{% else %}If this looks wrong, just reply to this email.{% endif %}{% endblock %}

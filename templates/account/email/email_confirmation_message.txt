@@ -1,0 +1,17 @@
+{% autoescape off %}{% if locale == "tr" %}Merhaba,
+
+{{ site_name }} hesabın için bu e-posta adresini doğrulaman gerekiyor. Aşağıdaki bağlantıyı aç:
+
+{{ activate_url }}
+
+Bu isteği sen yapmadıysan e-postayı yok sayabilirsin.
+
+{{ site_name }}{% else %}Hi,
+
+Please confirm this email address for your {{ site_name }} account by opening the link below:
+
+{{ activate_url }}
+
+If you didn't request this, you can safely ignore this email.
+
+{{ site_name }}{% endif %}{% endautoescape %}

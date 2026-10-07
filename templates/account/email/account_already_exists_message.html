@@ -1,0 +1,7 @@
+{% extends "emails/base.html" %}
+{% block eyebrow %}{% if locale == "tr" %}Hesap{% else %}Account{% endif %}{% endblock %}
+{% block heading %}{% if locale == "tr" %}Zaten bir hesabın var.{% else %}You already have an account.{% endif %}{% endblock %}
+{% block content %}
+<p style="margin:0;">{% if locale == "tr" %}<span style="color:#ece8df;">{{ email }}</span> adresiyle yeni bir hesap açılmaya çalışıldı, ancak bu adresle zaten bir hesabın var. Şifreni hatırlamıyorsan sıfırlayabilirsin.{% else %}Someone tried to sign up with <span style="color:#ece8df;">{{ email }}</span>, but an account with this address already exists. If you forgot your password, you can reset it.{% endif %}</p>
+{% endblock %}
+{% block cta_wrap %}{% with cta_url=password_reset_url %}{% if locale == "tr" %}{% with cta_label="Şifremi sıfırla" %}{{ block.super }}{% endwith %}{% else %}{% with cta_label="Reset password" %}{{ block.super }}{% endwith %}{% endif %}{% endwith %}{% endblock %}

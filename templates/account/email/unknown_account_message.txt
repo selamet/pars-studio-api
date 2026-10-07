@@ -1,0 +1,17 @@
+{% autoescape off %}{% if locale == "tr" %}Merhaba,
+
+{{ email }} adresiyle bir hesaba erişilmeye çalışıldı, ancak bu adresle kayıtlı bir hesap yok.
+
+Bu sen değilsen e-postayı yok sayabilirsin. Hesap açmak istersen:
+
+{{ signup_url }}
+
+{{ site_name }}{% else %}Hi,
+
+Someone tried to access an account with {{ email }}, but there is no account registered with this address.
+
+If that wasn't you, ignore this email. To create an account:
+
+{{ signup_url }}
+
+{{ site_name }}{% endif %}{% endautoescape %}

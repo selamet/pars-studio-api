@@ -1,0 +1,8 @@
+{% extends "emails/base.html" %}
+{% block eyebrow %}{% if locale == "tr" %}Hesap{% else %}Account{% endif %}{% endblock %}
+{% block heading %}{% if locale == "tr" %}Bu adresle bir hesap yok.{% else %}No account with this email.{% endif %}{% endblock %}
+{% block content %}
+<p style="margin:0;">{% if locale == "tr" %}<span style="color:#ece8df;">{{ email }}</span> adresiyle bir hesaba erişilmeye çalışıldı, ancak bu adresle kayıtlı bir hesap bulunmuyor. Hesap açmak istersen aşağıdaki butonu kullan.{% else %}Someone tried to access an account with <span style="color:#ece8df;">{{ email }}</span>, but no account is registered with this address. To create one, use the button below.{% endif %}</p>
+{% endblock %}
+{% block cta_wrap %}{% with cta_url=signup_url %}{% if locale == "tr" %}{% with cta_label="Hesap oluştur" %}{{ block.super }}{% endwith %}{% else %}{% with cta_label="Create an account" %}{{ block.super }}{% endwith %}{% endif %}{% endwith %}{% endblock %}
+{% block footer %}{% if locale == "tr" %}Bu sen değilsen e-postayı yok sayabilirsin.{% else %}If that wasn't you, you can ignore this email.{% endif %}{% endblock %}

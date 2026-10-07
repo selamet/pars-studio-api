@@ -4,9 +4,9 @@ from django.utils.html import format_html
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.decorators import action
 
-from apps.core.emails import send_templated_email
 from apps.downloads.models import DownloadGrant
 
+from .fulfilment import send_order_emails
 from .models import Order, OrderItem, Payment
 
 
@@ -99,8 +99,7 @@ class OrderAdmin(ModelAdmin):
     def resend_confirmation(self, request, queryset):
         sent = 0
         for order in queryset.filter(status=Order.Status.PAID):
-            context = {"order": order, "items": list(order.items.all()), "problems": []}
-            send_templated_email("order_confirmation", context, [order.customer_email])
+            send_order_emails(order, [], notify_studio=False)
             sent += 1
         self.message_user(request, f"Queued {sent} confirmation email(s).", messages.SUCCESS)
 
