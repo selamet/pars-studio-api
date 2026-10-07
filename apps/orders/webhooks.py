@@ -50,8 +50,23 @@ def handle_event(event: dict) -> Payment | None:
     if event_type in ("checkout.session.completed", "checkout.session.async_payment_succeeded"):
         order = _order_for_session(obj)
         if order and obj.get("payment_status") == "paid" and order.status == Order.Status.PENDING:
-            payment_type = Payment.Type.CHECKOUT_COMPLETED
             amount = Decimal(obj.get("amount_total") or 0) / 100
+            currency = str(obj.get("currency") or "").upper()
+            if amount != order.total or currency != order.currency:
+                # Never fulfil a session that does not pay exactly this order; leave it for staff.
+                logger.error(
+                    "Stripe session %s paid %s %s for order %s totalling %s %s",
+                    obj.get("id"),
+                    amount,
+                    currency,
+                    order.number,
+                    order.total,
+                    order.currency,
+                )
+                payment_type = Payment.Type.AMOUNT_MISMATCH
+            else:
+                payment_type = Payment.Type.CHECKOUT_COMPLETED
+        if payment_type == Payment.Type.CHECKOUT_COMPLETED:
             order.status = Order.Status.PAID
             order.paid_at = timezone.now()
             order.stripe_payment_intent_id = str(obj.get("payment_intent") or "")

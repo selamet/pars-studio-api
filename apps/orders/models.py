@@ -136,6 +136,7 @@ class Payment(TimeStampedModel):
 
     class Type(models.TextChoices):
         CHECKOUT_COMPLETED = "checkout_completed", "Checkout completed"
+        AMOUNT_MISMATCH = "amount_mismatch", "Paid amount mismatch"
         CHECKOUT_EXPIRED = "checkout_expired", "Checkout expired"
         PAYMENT_FAILED = "payment_failed", "Payment failed"
         REFUND = "refund", "Refund"
